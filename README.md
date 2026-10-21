@@ -161,8 +161,8 @@ flowchart TD
 
     N --> O[PD vs Healthy Control]
 ```
-## Project Proposal & Report:
-
+## Project Report:
+[View Project Report (PDF)](./project%20report.pdf)
 
 ## Team Members
 
