@@ -134,34 +134,31 @@ The models showed a progression in performance from the raw SVM baseline to the 
 The EGI-based SVM also improved over the raw-feature SVM, with subject-level AUC increasing from 0.6485 to 0.7603.
 
 ## Project Pipeline
-                WearGait-PD Dataset
-                        |
-                        v
-             Bilateral Ankle IMU Data
-                        |
-                        v
-                Signal Processing
-                        |
-          +-------------+-------------+
-          |                           |
-          v                           v
-   EGI Feature Branch          Raw IMU Branch
-          |                           |
-          v                           v
-      EGI Features             200 × 12 Windows
-          |                           |
-          v                 +---------+---------+
-      SVM Classifier         |         |         |
-          |                 v         v         v
-          |              1D CNN   CNN-Transformer  ResNet-18
-          |                                      |
-          v                                      v
-    SHAP Analysis                         Recurrence Plots
-          |                                      |
-          +------------------+-------------------+
-                             |
-                             v
-               Subject-Level Evaluation
-                             |
-                             v
-                   PD vs Healthy Control
+
+```mermaid
+flowchart TD
+    A[WearGait-PD Dataset] --> B[Bilateral Ankle IMU Data]
+    B --> C[Signal Processing]
+
+    C --> D[EGI Feature Branch]
+    C --> E[Raw IMU Branch]
+
+    D --> F[EGI Features]
+    F --> G[SVM Classifier]
+    G --> H[SHAP Analysis]
+
+    E --> I[200 × 12 Windows]
+    I --> J[1D CNN]
+    I --> K[CNN-Transformer]
+    I --> L[ResNet-18]
+
+    L --> M[Recurrence Plots]
+
+    H --> N[Subject-Level Evaluation]
+    J --> N
+    K --> N
+    M --> N
+
+    N --> O[PD vs Healthy Control]
+```
+
