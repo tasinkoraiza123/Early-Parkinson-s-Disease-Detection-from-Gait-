@@ -161,4 +161,12 @@ flowchart TD
 
     N --> O[PD vs Healthy Control]
 ```
+## Project Proposal & Report:
 
+
+## Team Members
+
+1. Tasfin Koraiza Boishakhi — 2211528042
+2. Tasfia Samrin — 2211249042
+3. Farzana Sayeda Sumaiya — 2211211042
+4. Tayeba Hasan  — 2211963042
