@@ -134,3 +134,34 @@ The models showed a progression in performance from the raw SVM baseline to the 
 The EGI-based SVM also improved over the raw-feature SVM, with subject-level AUC increasing from 0.6485 to 0.7603.
 
 ## Project Pipeline
+                WearGait-PD Dataset
+                        |
+                        v
+             Bilateral Ankle IMU Data
+                        |
+                        v
+                Signal Processing
+                        |
+          +-------------+-------------+
+          |                           |
+          v                           v
+   EGI Feature Branch          Raw IMU Branch
+          |                           |
+          v                           v
+      EGI Features             200 × 12 Windows
+          |                           |
+          v                 +---------+---------+
+      SVM Classifier         |         |         |
+          |                 v         v         v
+          |              1D CNN   CNN-Transformer  ResNet-18
+          |                                      |
+          v                                      v
+    SHAP Analysis                         Recurrence Plots
+          |                                      |
+          +------------------+-------------------+
+                             |
+                             v
+               Subject-Level Evaluation
+                             |
+                             v
+                   PD vs Healthy Control
