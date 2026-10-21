@@ -1,0 +1,2610 @@
+Senior Design Project Report 
+Department of ECE 
+Early Parkinson’s Disease Detection from Gait 
+Using an Explainable CNN-Transformer and Early 
+Gait Instability Index 
+Submitted By 
+NAME 
+Tasfia Samrin 
+ID 
+2211249042 
+Tayeba Hasan 
+Tasin Koraiza Boishakhi 
+2211963042 
+2211528042 
+Supervisor 
+Dr. Shahnewaz Siddique(SNS1) 
+Assistant Professor 
+ELECTRICAL AND COMPUTER ENGINEERING 
+NORTH SOUTH UNIVERSITY 
+APPROVAL 
+Tasfia Samrin (2211249042), Tayeba Hasan (2211963042) and Tasin Koraiza Boishakhi 
+(2211528042) from Electrical and Computer Engineering Department of North South 
+University, have worked on the Senior Design Project titled “Early Parkinson’s Disease 
+Detection from Gait Using an Explainable CNN-Transformer and Early Gait Instability 
+Index” under the supervision of Dr. Shahnewaz Siddique partial fulfillment of the 
+requirement for the degree of Bachelors of Science in Engineering and has been accepted as 
+satisfactory.  
+Supervisor’s Signature 
+……………………………………. 
+Dr. Shahnewaz Siddique 
+Assistant Professor 
+ELECTRICAL AND COMPUTER ENGINEERING 
+North South University 
+Dhaka, Bangladesh. 
+Chairman’s Signature 
+……………………………………. 
+Dr. Mohammad Abdul Matin 
+Professor 
+Department of Electrical and Computer Engineering 
+North South University 
+Dhaka, Bangladesh. 
+1 
+DECLARATION 
+This is to declare that this project is our original work. No part of this work has been 
+submitted elsewhere partially or fully for the award of any other degree or diploma. All 
+project related information will remain confidential and shall not be disclosed without the 
+formal consent of the project supervisor. Relevant previous works presented in this report 
+have been properly acknowledged and cited. The plagiarism policy, as stated by the 
+supervisor, has been maintained. 
+The project titled "Early Parkinson’s Disease Detection from Gait Using an Explainable 
+CNN-Transformer and Early Gait Instability Index" was developed using the publicly 
+available WearGait-PD dataset. The EGI feature pipeline, all machine learning and deep 
+learning architectures (SVM, 1D-CNN, CNN-Transformer, ResNet-18 with Recurrence 
+Plots), SHAP explainability analysis, and the content of this report are entirely the original 
+contributions of the undersigned students, completed under the supervision of the project 
+advisor. 
+Students’ names & Signatures  
+Tasfia Samrin - 2211249042 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+Tayeba Hasan - 2211963042 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+Tasin Koraiza Boishakhi - 2211528042 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+2 
+ACKNOWLEDGEMENTS 
+We would like to express our heartfelt gratitude towards our supervisor, Dr. 
+Shahnewaz Siddique, Assistant Professor, Department of Electrical and Computer 
+Engineering, North South University, Bangladesh, for his invaluable support, precise 
+guidance and advice pertaining to the experiments, research and theoretical studies carried 
+out during the course of the current project and also in the preparation of the current report. 
+Furthermore, we would like to thank the Department of Electrical and Computer Engineering, 
+North South University, Bangladesh for facilitating the research. We would also like to thank 
+our family members, friends, and fellow classmates, to whom we might have caused any 
+inconvenience during the project term, for their understanding and support. 
+3 
+ABSTRACT 
+Early Parkinson’s Disease Detection from Gait Using an 
+Explainable CNN-Transformer and Early Gait Instability Index 
+Parkinson's Disease (PD) is a progressive neurodegenerative condition that manifests 
+with characteristic gait abnormalities, including decreased stride variability, asymmetry, 
+resting tremor, and impaired turning. As PD symptoms are predominantly motor in nature, 
+early-stage identification remains clinically challenging. This project introduces an 
+automated, objective framework for early PD detection through an Early Gait Instability 
+Index (EGI) using wearable inertial measurement unit (IMU) sensors placed at the ankles.  
+The EGI derives five composite scores — variability, asymmetry, tremor, timing, and 
+turning from the IMU recordings in the WearGait-PD dataset during free-paced walking and 
+Timed Up-and-Go (TUG) activities, providing clinicians with interpretable, quantitative gait 
+assessments. In addition to the EGI based SVM model, multiple deep learning models were 
+developed and evaluated. The SVM classifier was trained on EGI features and demonstrated 
+stronger predictive performance compared to a baseline classifier without EGI-derived 
+features. Three deep learning models were also implemented: a 1D Residual CNN with 
+Squeeze-and-Excitation (SE) attention, a Hybrid CNN-Transformer, and a ResNet-18 trained 
+on 2D Recurrence Plot (RP) gait images. All models were evaluated using subject-level 
+group 5-fold cross-validation to prevent data leakage and reduce bias. SHAP explainability 
+analysis was applied to validate and interpret the final results. The Hybrid CNN-Transformer 
+achieved the best overall performance, attaining an AUC of 0.8544, accuracy of 79.87%, 
+sensitivity of 80.88%, and specificity of 79.01%.  
+4 
+TABLE OF CONTENTS 
+APPROVAL..............................................................................................................................1 
+DECLARATION......................................................................................................................2 
+ACKNOWLEDGEMENTS.....................................................................................................3 
+ABSTRACT..............................................................................................................................4 
+TABLE OF CONTENTS.........................................................................................................5 
+Chapter 1 Introduction............................................................................................................6 
+1.1 Background and Motivation...........................................................................................6 
+1.2 Purpose and Goal of the Project.....................................................................................7 
+1.3 Organization of the Report.............................................................................................8 
+Chapter 2 Research Literature Review..................................................................................9 
+2.1 Existing Research and Limitations.................................................................................9 
+2.2 Limitations of Existing Work.......................................................................................11 
+Chapter 3 Methodology.........................................................................................................15 
+3.1 System Design..............................................................................................................15 
+3.2 Software Components and Implementation.................................................................19 
+Chapter 4 Investigation/Experiment, Result, Analysis and Discussion............................37 
+Chapter 5 Impacts of the Project..........................................................................................74 
+5.1 Impact of this project on societal, health, safety, legal and cultural issues..................74 
+5.2 Impact of this project on environment and sustainability............................................74 
+Chapter 6 Project Planning and Budget..............................................................................75 
+6.1  Project Planning..........................................................................................................75 
+6.2  Project Budget.............................................................................................................75 
+Chapter 7 Complex Engineering Problems and Activities.................................................76 
+7.1 Complex Engineering Problems (CEP)........................................................................76 
+7.2 Complex Engineering Activities (CEA)......................................................................77 
+Chapter 8 Conclusions...........................................................................................................79 
+8.1 Summary......................................................................................................................79 
+8.2 Limitations...................................................................................................................79 
+8.3 Future Improvement.....................................................................................................80 
+References...............................................................................................................................81 
+5 
+Chapter 1 Introduction 
+1.1 Background and Motivation 
+Parkinson's Disease (PD) is the second most prevalent neurodegenerative disorder in the 
+world with over 10 million people worldwide affected [1]. It results from the progressive loss 
+of dopamine-producing cells in the substantia nigra of the brain and causes symptoms of 
+bradykinesia, rigidity, resting tremor and postural instability [2]. These symptoms create 
+significant impairments in mobility, balance and quality of life. 
+Gait problems are among the most frequent symptoms of Parkinson's. Patients may have a 
+slow gait, a small step length, a poor turning ability, freezing of gait, and a loss of balance 
+[3]. These abnormalities make people more likely to fall and be unable to walk around on 
+their own. Gait-related symptoms often occur in early disease and gait analysis is a key 
+research field for the early detection of Parkinson's Disease. 
+The diagnosis of Parkinson's disease is largely based on clinical diagnosis and neurological 
+examination. Early symptoms are, however, often subtle and hard to be accurately diagnosed 
+[4]. Hence, researchers have been increasingly interested in wearable sensor technologies and 
+in the use of artificial intelligence techniques for objective and automatic evaluation of 
+Parkinson's disease. 
+Portable, low-cost, and capable of continuous data acquisition of motion signals like 
+acceleration and angular velocity, Wearable Inertial Measurement Unit (IMU) sensors are 
+widely used in gait analysis [5]. IMU-based systems can be used to automatically detect gait 
+abnormalities linked to Parkinson's disease in combination with machine learning and deep 
+learning algorithms. 
+This project aims to develop an explainable IMU-based gait classification model for detecting 
+Parkinson's disease in the early stages with sensors placed on both of the ankles. The 
+proposed system examines both the clinically engineered Explainable Gait Index (EGI) 
+features and deep learning models like 1D-CNN, CNN-Transformer and ResNet 
+architectures. In addition, explainability techniques like SHAP analysis and attention 
+visualization are integrated for enhanced clinical interpretability. Early diagnosis of 
+Parkinson's disease can help facilitate timely intervention, better management of the patient, 
+and better quality of life [6]. 
+6 
+1.2 Purpose and Goal of the Project 
+The main goal of this project is to create a precise and interpretable machine learning system 
+to detect Parkinson's Disease (PD) in its early stages by analyzing gait using wearable 
+sensors. The goal of the system is to automatically categorize Parkinsonian gait patterns from 
+multichannel inertial measurement unit (IMU) signals collected using bilateral 
+ankle-mounted sensors. 
+Specifically , this project is aimed at the distinction of early-stage PD patients (Hoehn and 
+Yahr stages 1-2) from healthy controls by analysing gait characteristics in spatiotemporal 
+dimension. This is an automatic and objective evaluation of gait abnormalities, which is 
+different from conventional clinical assessments, which are subjective and time consuming.  
+A new Explainable Gait Index (EGI) is presented which encompasses five clinically 
+interpretable components – variability, asymmetry, tremor, timing and turning – to quantify 
+gait instability. The index is a single composite biomarker that reflects the severity of motor 
+impairment as well as gait irregularity in Parkinson's disease.  
+The major contributions of this work include the following: 
+1. Proposing a new Early Gait Instability Index (EGI) : A novel Early Gait Index(EGI) 
+was introduced which quantify gait instability by integrating five clinically 
+interpretable components such as: Variability, Asymmetry, Tremor, Timing and 
+Turning. EGI acts as a unified composite biomarker indicating the level of motor 
+impairment and gait instability in PD patients. 
+2. Multi-modal gait representation framework: The proposed framework utilizes raw 
+IMU sensor signals along with Explainable Gait Index features to jointly represent 
+gait at both low-level and high-level. 
+3. Evaluation of several ML & DL algorithms: Traditional machine learning algorithms 
+such as SVM were compared with Deep Learning algorithms including 
+one-dimensional CNN, CNN-Transformer models, and ResNet-18 with 2D 
+Recurrence Plot architectures in this study to perform classification for Parkinson’s 
+Disease. 
+4.  Focus on early stage PD: The research concentrated on the diagnosis of early stage 
+Parkinson’s disease (H and Y Stage1-2) for its greater clinical challenges in detection. 
+7 
+5. Robust Subject-level Group 5-fold Cross-validation: A highly effective subject-level 
+5-fold cross-validation method was used to avoid any possible data leakage during 
+testing. 
+6. Model explainability: SHAP-based feature importance and Attention 
+mechanism-based visualization techniques were used to improve model 
+explainability. 
+7.  
+Bilateral IMU sensors for gait asymmetry and turning evaluation: Bilateral ankle 
+placement is useful for modeling interlimb asymmetry, turn performance, and gait 
+coordination disorders. 
+1.3 Organization of the Report 
+This report is configured in a basic manner. The next section of the report (Chapter 2) focuses 
+on what others have learned about PD gait analysis and machine learning methods. Then in 
+Chapter 3 we talk about the dataset that we used, and how we prepared the data for the EGI 
+feature engineering framework, as well as the machine learning and deep learning 
+architectures that we used. Following this, Chapter 4 illustrates the outcome of our 
+experiments, our learning and how our models compare. This project is expected to impact 
+humans, their health and the environment, which are addressed in Chapter 5 of this report. 
+Chapter 6 is on the planning of the project along with the cost of the project. Chapter 7 is 
+devoted to the engineering problems that we had to solve and what we did. Finally Chapter 8 
+discusses what we learned; what we didn't do; and what we can do now with the PD gait 
+analysis and machine learning approaches. 
+8 
+Chapter 2 Research Literature Review 
+2.1 Existing Research and Limitations 
+1. Dataset Foundation ( WearGait-PD) 
+The WearGait-PD open-access dataset used in this project was published in 2026 by 
+Anderson et al. [1]. The dataset contains raw IMU and sensorized insole data from 100 
+people with PD and 85 age-matched controls, recorded and synchronized to a gait walkway 
+reference system, consisting of 3-DOF acceleration and rotational velocity from 13 
+body-worn IMUs. All data were linked to clinical assessments based on H and Y scores and 
+MDS-UPDRS, developed with the assistance of the FDA, VA, and Johns Hopkins School of 
+Medicine. 
+2. Classical Feature-Based Detection (CoP Insole Approach) 
+Nanayakkara et al. [2] tested center-of-pressure (CoP) features extracted from wearable 
+pressure insoles applied to the same WearGait-PD dataset for PD detection. The authors 
+selected 39 PD and 38 controls and extracted 144 CoP features from four domains which are: 
+positional, dynamic, frequency, and stochastic during the Timed Up and Go (TUG) test. A 
+23-feature subset showed the best performance with logistic regression, yielding accuracy 
+0.875 and ROC-AUC 0.921, where dynamic and frequency-domain asymmetry features were 
+most frequently selected. 
+3. Deep Learning with Image Representation (GAF-CNN) 
+Deep Convolutional Networks (DCNNs) and Gramian Angular Fields (GAFs) were used by 
+Mostafavi et al. [3] to classify PD gait signals from pressure insoles. Results showed 
+accuracy of 98.6% and true positive rate of 99.2%, with severity estimated from 10-second 
+gait windows achieving R² greater than 0.8 for Hoehn and Yahr scores. While the results 
+appear strong, the dataset and evaluation methodology are not fully specified, limiting 
+reproducibility and direct comparison. 
+9 
+4. Hybrid CNN-Transformer for PD Staging (VGRF Approach) 
+Naimi et al. [4] proposed a hybrid 1D ConvNet-Transformer model to diagnose PD severity 
+using VGRF signals. The proposed architecture combines CNN and Transformer in an 
+end-to-end model, where the CNN extracts relevant local features from the VGRF signal and 
+the Transformer captures long-term spatio-temporal dependencies. The model achieved 
+87.89% accuracy on the Physionet gait dataset, outperforming SVM-RBF (75.60%), ANN 
+(76.08%), and standalone 1D-CNN (85.30%) baselines. An ablation study confirmed that 
+removing either the CNN or Transformer component reduced performance, showing both are 
+essential. 
+5. Transformer Architecture ( Self-Attention for Sequence Modelling) 
+Vaswani et al. [5] introduced the Transformer which is a neural network architecture built 
+entirely on self-attention mechanisms. The Transformer outperforms recurrent models in 
+parallelizability and sequence modelling tasks. Multi-head attention enables the model to 
+attend to information from various representation subspaces simultaneously at multiple 
+positions, facilitating richer temporal modelling. This foundational architecture directly 
+underpins our Hybrid CNN-Transformer, where a CLS token aggregates gait information 
+across 50 temporal positions of each 2-second window. 
+6. Channel Attention ( Squeeze-and-Excitation Networks) 
+Hu et al. [6] introduced Squeeze-and-Excitation (SE) blocks which adaptively recalibrate 
+feature responses across CNN channels. SE blocks explicitly model interdependencies 
+between channels, achieving significant performance improvements at minimal additional 
+computational cost. In this project, SE blocks are integrated into the 1D-CNN and Hybrid 
+CNN-Transformer to dynamically emphasise the most discriminative of the 128 learned gait 
+features per input window which is an architectural improvement over the basic CNN used by 
+Naimi et al. [4] which did not include channel attention. 
+7. Explainable AI (SHAP Framework) 
+Lundberg and Lee [7] proposed SHAP (SHapley Additive exPlanations)  which is a unified 
+framework for interpreting machine learning predictions. SHAP assigns a significance score 
+to each feature for a specific prediction, addressing the balance between accuracy and 
+10 
+interpretability in complex models. In this project, SHAP KernelExplainer is applied to the 
+trained EGI-SVM model, providing clinical explainability not considered by Naimi et al. [4] 
+or Mostafavi et al. [3], and revealing that gait variability contributes 61.8% of the total model 
+decision weight. 
+2.2 Limitations of Existing Work 
+The following observations have been made after a detailed examination of the literature: 
+(i) Use of pressure insoles or VGRF sensors instead of ankle IMU. Nanayakkara et al. [2] 
+and Mostafavi et al. [3] employed pressure insoles, while Naimi et al. [4] used VGRF foot 
+sensors from the Physionet dataset. Angular velocity, step asymmetry, and rotational 
+dynamics have not been explored in prior work, and to our knowledge, limited study has been 
+conducted using bilateral ankle IMU channels for PD classification on WearGait-PD. 
+(ii) No clinically interpretable feature framework. Mostafavi et al. [3] used end-to-end 
+deep learning with no clinical interpretation at the feature level. Nanayakkara et al. [2] 
+derived generic CoP statistics without clinical motivation. Naimi et al. [4] processed raw 
+VGRF signals with no clinical signal intention. None grounded their features in specific PD 
+gait markers such as variability, asymmetry, tremor, timing, and turning. 
+(iii) No explainable AI validation. Although SHAP [7] and Transformer attention [5] are 
+established explainability tools, none of the reviewed studies applied them to validate model 
+decisions against clinical gait knowledge. Naimi et al. [4] conducted only an ablation study 
+without feature-level or attention-level clinical interpretation. 
+(iv) Evaluation methodology limitations. Mostafavi et al. [3] reported 98.6% accuracy 
+without subject-level Group cross-validation, risking data leakage. Naimi et al. [4] applied 
+10-fold cross-validation at the walk-segment level rather than the subject level, allowing 
+segments from the same subject to appear in both training and test folds. Nanayakkara et al. 
+[2] used a single 80/20 split without Group K-Fold. 
+(v) Multi-class severity staging rather than early-stage binary detection. Naimi et al. [4] 
+targeted multi-class H and Y staging (Healthy/Mild/Medium/High) on moderate-to-severe 
+patients (H and Y 2–3). No reviewed study addressed binary PD vs Control detection 
+specifically for early-stage patients (H and Y 1–2),  the most clinically critical and least 
+studied group. 
+11 
+(vi) No H and Y stage-stratified analysis. No reviewed study evaluated performance 
+separately for H and Y Stage 1 and Stage 2 patients. Combining all early PD stages hides 
+whether detection works for the mildest patients who need early intervention most. 
+Table 2.1: Comparison of Related Works 
+12 
+ Nanayakkara et 
+al. [2] (2025) 
+Mostafavi et al. 
+[3] (2025) 
+Naimi et al. [4] 
+(2023) 
+Our Work 
+Dataset WearGait-PD Not explicitly 
+specified (insole 
+pressure data) 
+Physionet Gait 
+Dataset 
+WearGait-PD 
+Sensor Type Pressure insoles 
+(CoP) 
+Pressure insoles VGRF foot sensors Bilateral ankle 
+IMU 
+Sensor Location Foot (insole) Foot (insole) Foot (pressure 
+plate) 
+Bilateral ankle 
+Subjects 39 PD + 38 
+Control 
+Not specified 93 PD + 73 Control 68 PD + 82 
+Control 
+PD Stage Focus All stages mixed All stages mixed H and Y 2–3 
+(moderate–severe) 
+H and Y 1–2 
+only (early 
+stage) 
+H and Y 
+Stratified 
+Analysis 
+No No No Yes 
+Feature 
+Engineering 
+144 CoP features None 
+(end-to-end) 
+None (end-to-end) 61 EGI features 
+(5 components) 
+Models Used SVM-RBF, LR, 
+RF, KNN, NB 
+Deep CNN + 
+GAF 
+Hybrid 1D 
+ConvNet-Transfor
+mer 
+SVM+EGI, 
+1D-CNN, 
+CNN-Transfor
+mer, 
+ResNet-18+RP 
+Evaluation 
+Method 
+Single 80/20 
+subject split 
+Not specified 10-fold CV 
+(segment level) 
+Group 5-fold 
+CV (subject 
+level) 
+ Nanayakkara et 
+al. [2] (2025) 
+Mostafavi et al. 
+[3] (2025) 
+Naimi et al. [4] 
+(2023) 
+Our Work 
+Subject-Level 
+Evaluation 
+Best AUC 
+Best Accuracy 
+Sensitivity 
+Specificity 
+F1-Score 
+Explainability 
+(XAI) 
+Dual XAI 
+Validation 
+Early Stage (H 
+and Y 1–2) 
+Focus 
+Partial 
+0.921 
+87.5% 
+75.0% 
+Not reported 
+0.857 
+None 
+No 
+No 
+Not specified 
+Not reported 
+98.6% 
+99.2% (TPR) 
+98.5% (TNR) 
+Not reported 
+None 
+No 
+No 
+No 
+Not reported 
+87.89% 
+Not specified 
+Not specified 
+0.87 (weighted 
+avg) 
+Ablation study 
+only 
+No 
+No 
+Yes 
+0.854 
+79.9% 
+80.9% 
+79.0% 
+0.786 
+SHAP + 
+Attention maps 
+Yes 
+Yes 
+Table 2.1 demonstrates several important differences between the proposed work and existing 
+studies. Unlike previous approaches that primarily relied on pressure insoles or VGRF foot 
+sensors, the proposed system utilises bilateral ankle-mounted IMU sensors capable of 
+capturing acceleration, rotational dynamics, asymmetry, and turning behaviour 
+simultaneously. Furthermore, prior studies either lacked clinically interpretable feature 
+engineering or relied solely on end-to-end deep learning models without explainability 
+mechanisms. In contrast, the proposed framework combines clinically structured EGI features 
+with machine learning architectures and integrates SHAP and attention-based explainability. 
+Most importantly, previous studies commonly used segment-level or non-grouped validation 
+strategies that may introduce subject-level data leakage, whereas this work applies strict 
+Group 5-Fold subject-level cross-validation for more reliable clinical evaluation. 
+It should be noted that the studies reviewed above were conducted on different datasets with 
+varying sensor modalities, cohort characteristics, disease severity distributions, preprocessing 
+pipelines, and validation strategies. While some studies used pressure insole or VGRF-based 
+signals, others used full-body IMU systems or alternative gait datasets. Furthermore, no prior 
+work was identified that trained and evaluated models under the exact experimental 
+configuration adopted in this project, including the early-stage-only WearGait-PD cohort  (H 
+13 
+and Y≤2), bilateral ankle IMU selection, and strict Group 5-Fold subject-level 
+cross-validation protocol. Therefore, the comparison presented in this chapter is intended 
+primarily to highlight methodological trends, architectural differences, explainability 
+approaches, and research gaps rather than to establish direct numerical superiority between 
+models. 
+14 
+Chapter 3 Methodology 
+3.1 System Design 
+The proposed system is a dual-branch machine learning pipeline for early-stage Parkinson’s 
+Disease prediction using bilateral ankle-mounted Inertia Measurement Unit (IMU) data. The 
+system is designed as an AI-based gait analysis system, capable of predicting gait instabilities 
+that signify early-stage Parkinson’s disease (PD). It processes raw gait signals through 
+preprocessing, feature extraction, machine learning and deep learning to generate 
+classification and risk assessment outputs. The overall architecture of the system comprises 
+of the following main components:  
+1. Data obtained from wearable IMU sensors. 
+2. Signal preprocessing and segmentation. 
+3. Feature Extraction for early gait instability index (EGI) 
+4. Machine learning and deep learning model training 
+5. Explainable AI analysis 
+6. Final prediction and performance evaluation 
+The overall architecture is presented in figure 3.A and the detailed data preprocessing flow is 
+illustrated in figure 3.B.  
+15 
+Fig 3.A: The system’s full architecture: Two parallel branches. 
+Figure 3.A shows the full dual-branch system of obtaining raw data and evaluating clinical 
+outcome. The pipeline consists of a shared preprocessing stage, followed by the EGI-SVM 
+branch running on the left and the Deep Learning branch running on the right, both leading to the 
+subject-level evaluation stage, as shown.  
+The system loads bilateral ankle IMU recordings from 149 subjects, where 82 are healthy 
+controls and 68 early-stage PD patients (Hoehn and Yahr stages 1-2); it is then sampled at 
+100HZ across 12 channels (3-axis accelerometer and 3-axis gyroscope per ankle). The data is 
+then passed through one common pre-processing pipeline, which later on splits into two 
+separate branches of classifiers. 
+16 
+Fig 3.B: The Data Preprocessing Pipeline 
+Figure 3.B illustrates the step by step data preprocessing pipeline. The common 
+pre-processing pipeline goes through three consecutive steps. The first step is to partition the 
+continuous recording into Walk windows and Turn windows based on the annotated event 
+labels, resulting in only purposeful locomotion events included and non-gait transitions  and 
+other events excluded from any window.. In the second stage, a per-channel 4th order 
+zero-phase Butterworth bandpass filter (0.5-10 HZ) filters both the DC drift and high 
+frequency noise per channel while retaining the gait frequency band (0.5-10 Hz) and the 
+pathological resting tremor band (3-8 Hz).  This produces a common input of 12079 windows 
+of size 200 x 12 with 75% overlap is provided to both branches as windows that are 
+overlapping and labelled. Once the framework is preprocessed, it splits into two branches as 
+depicted in Figure 3.A. 
+In the proposed EGI (Early Gait Instability Index) feature extraction module window-shaped 
+gait parameters for each are extracted as five clinically relevant component scores, namely 
+17 
+Variability, Asymmetry, Tremor, Timing and Turning, producing a 55-dimensional structured 
+feature vector for every window. This feature matrix is used to train a Support Vector 
+Machine (SVM) Classifier. Without structuring of EGI, eighty-four baseline raw IMU 
+statistical and spectral features are used to train a parallel SVM baseline as a no-EGI baseline 
+comparison to support the claim of discriminative value added by EGI. To get 
+component-level attribution and generate clinical interpretation, the EGI-SVM model is 
+analyzed using post-hoc SHAP (SHapley Additive exPlanations). 
+The first part deals with the extraction of Engineered Early Gait Instability features and 
+application of classical machine learning techniques such as Support Vector Machine(SVM). 
+The second branch uses raw IMU signal windows directly as input to deep learning models 
+such as 1D CNN, Hybrid CNN-Transformer and ResNet-based models. 
+For the deep learning architectures, the raw 200×12 IMU windows are fed directly into the 
+models without any hand-crafted feature engineering. The three models are as follows: 1) 
+1D-CNN model with SE (Squeeze-and-Excitation) channel attention and residual blocks; 
+2)Hybrid CNN-Transformer model that replaces Transformer layers with pre-layer norm 
+transformations and includes a classification mechanism for the CLS (Classification) token; 
+and 3) ResNet-18 model applied on 96×96 Recurrence Plot (RP) image representations of the 
+IMU signals. The information provided from each event in the gait cycle for each of the 
+Hybrid model's temporal regions is also extracted via attention map analysis to help 
+determine the temporal regions of the gait cycle that are the most informative for 
+classification. 
+Both branches are evaluated at the subject level in a shared framework of 5-fold 
+Cross-Validation ensuring that no subject is present in both training and test sets at the same 
+time. For each model a classification threshold is determined optimally using Youden's J 
+statistic. A model based Hoehn & Yahr stage-stratified analysis ensures to re-evaluate the 
+best-performing model separately on H and Y Stage 1 and Stage 2 subgroups against healthy 
+controls, and to measure clinical utility at the earliest detectable disease stages. 
+18 
+3.2 Software Components and Implementation 
+A. Dataset 
+The WearGait-PD dataset (Anderson et al., Scientific Data,2025) is obtained from the 
+Synapse open access repository, https://www.synapse.org/Synapse:syn52540892/wiki/. The 
+entire dataset comprises 185 subjects including 100 patients with PD and 85 healthy controls 
+of similar age.  Data was programmatically accessed using the synapseclient library and 
+downloaded using token-based authentication, as well as filtering the subjects prior to 
+downloading by a set of clinical criteria. The following image shows the overview of data 
+workflow for the WearGait-PD dataset; it is collected from Anderson et al., Scientific 
+Data,2025. 
+Fig 3.C: WearGait-PD data collection and processing workflow 
+(https://www.nature.com/articles/s41597-026-06806-2) 
+Subject Selection Rationale: 
+The Modified Hoehn & Yahr (H and Y) scale is a metric that describes PD severity on a scale 
+of 0 (no sign of disease), 1 (disease in 1 hemisphere of the body), 1.5 (disease in 1 hemibody 
+plus axial signs), 2 (disease in both hemibodies, no disability in posture), 2.5 (mild bilateral 
+with recovery of posture), 3 (moderate bilateral with postural instability), 4 (severe, still 
+ambulatory), and 5 (wheelchair-confined). It includes patients from H and Y Stage 1 through 
+to Stage 3 and beyond as the whole data set mean is 2.15 ± 0.61. 
+19 
+This project only covers early stage PD ((H and Y) ≤ 2) -stages 1,1.5,2. The clinical and 
+engineering rationale for this specific cohort selection is threefold: first, patients in early 
+stages exhibit subtle, clinically ambiguous gait deviations that are very difficult to detect and 
+classify using traditional visual assessments. Second, detecting PD at stages 3-5 provides 
+limited clinical value since severe motor dysfunction is already visibly apparent to clinicians 
+without technology and finally, early detection can make a big difference from a clinical 
+standpoint since it will allow drug treatment to begin before further degeneration takes place. 
+After applying the ((H and Y) ≤ 2) filter, 68 PD patients were retained. Of 85 available 
+controls, 82 had complete valid recordings for both task files; 3 were excluded due to missing 
+CSV data. The final cohort is 149 subjects — 68 PD, 82 controls. Each subject contributed 
+two structured gait task recordings: 
+SelfPace.csv – self-paced walking trial 
+TUG.csv – Timed Up and Go test (walk, turn, return, sit) 
+Each recording provides 12 IMU channels at 100 Hz from bilateral ankle sensors: 3-axis 
+accelerometer and 3-axis gyroscope for both left and right ankles. Although the full 
+WearGait-PD sensor suite covers 13 body locations, only bilateral ankle channels are used in 
+this project. This design decision is supported by the biomechanical literature: ankle-mounted 
+IMUs capture the complete gait cycle - heel strike, stance, toe-off, and swing phases - with 
+the highest signal-to-noise ratio for step detection. Ankle sensors also capture tremor 
+propagation to the lower limb and bilateral asymmetry directly from foot contact dynamics. 
+Fig 3.D: Full WearGait-PD IMU sensor placement (left, front, right views) 
+20 
+B. EDA 
+EDA was performed before building any feature extraction or model to gain insights about 
+the signal characteristics and confirm that the data is suitable for classification. 
+Class distribution analysis showed that there was a slight imbalance (55% Control vs 45% PD 
+at the window level). Considering that, this led to the use of inverse-frequency class 
+weighting rather than over sampling in all classifiers, as oversampling time-series windows 
+can lead to introducing temporal artifacts. These differences between PD and Control signals 
+were confirmed by inspection of the raw signal from many subjects:  
+● The magnitude of acceleration between two gait cycles is greater for PD subjects 
+at the peak of the peak-to-peak range. 
+● Increase in the power spectral density (PSD) within the tremor band (3-8Hz) is 
+found in PD subjects when compared to controls. 
+● For PD subjects, the left-right asymmetry for acceleration RMS is greater.  
+These observations were evaluated using Mann Whitney U and Cohen's d tests. Key findings 
+showed that the Variability component (d = +0.8, p < 0.001), Asymmetry (d = +0.6, p < 0.001), 
+Timing (d = +0.5, p < 0.001) were statistically significant. The tremor component showed 
+marginal but statistically significant separation (p=0.033, d= -0.044), however the small effect 
+size indicated that it is a weak discriminator during walking. This  is physiologically expected 
+since PD resting tremor is partially suppressed during voluntary walking through an action related 
+inhibition mechanism. This EDA finding directly influenced the EGI design ; tremor is retained 
+as a secondary rather than primary discriminator. 
+A quality check of the signals confirmed no clipped values and demonstrated that the 
+bandpass filtering successfully removed any DC offset. Furthermore, the low amount of 
+missing data, comprising less than 2% of each recording, was effectively handled using linear 
+interpolation. 
+C. Pre-processing Pipeline 
+The pre-processing pipeline was engineered in three ways: clinically relevant amplitude of 
+the signals was preserved to extract features, non-gait noise was removed without altering the 
+21 
+frequency bands of the gait and tremor signals, and there was no data leakage into the 
+cross-validation evaluation framework. 
+A flowchart for data preprocessing pipeline: 
+Raw CSV Files → Load and check required IMU columns → Linear interpolation of missing 
+values → Butterworth Bandpass Filter → Event label segmentation(Extract walk and turn 
+segments only)  → Sliding Window Segmentation → Quality check: reject windows with 
+NaN values → Save: walk_windows, turn_windows. 
+Missing Value Imputation: 
+Linear interpolation was used rather than mean/median imputation because the IMU is a 
+continuous time-series with samples that are tightly correlated from one to the next. Local 
+linear trends are used to replace missing samples, which ensures the temporal continuity of 
+the signal, while global mean imputation would cause artificial discontinuities in the signal 
+and then affect the features in the frequency domain. 
+Bandpass Filtering (0.5–10 Hz): 
+A 4th order Butterworth filter was chosen for three engineering reasons: the passband of a 
+Butterworth filter is maximally flat, meaning no ripple in the preserved frequency range is 
+generated, unlike Chebyshev filters, the 4th order is sufficiently roll-off to allow the 
+suppression of DC drift below 0.5 Hz and high frequency noise over 10 Hz without 
+introducing excessive phase distortion, and lastly, zero phase filtering through the use 
+forward-backward filter provides zero phase delay, which is critical since a phase shifts 
+would lead to an incorrect alignment of the bilateral left-right signals and corrupt the 
+asymmetry features that rely on precise time-domain synchrony between left and right ankle 
+signals. 
+The lower cutoff of 0.5 Hz is clinically grounded because it eliminates the DC offset and very 
+slow drift. The upper cutoff of 10Hz includes the normal gait band of 0.5-3Hz, step frequency 
+0.5-3steps/second and the PD resting tremor band (3-8Hz) with a 2Hz margin, and excludes 
+sensor vibration and electrical noise above 10Hz. Most importantly, at this point, no 
+amplitude normalisation is performed, as amplitude preservation is required because the 
+features used, such as tremor power, gait power, RMS and variability range, are all amplitude 
+dependent. These discriminative features would be lost during premature normalisation. 
+22 
+Event Segmentation: 
+Walk events labelled Walk and SitToStand and Turn events labelled Turn and TurnToSit are 
+extracted separately. Sitting, Standing and Unlabeled events are disregarded because they 
+contain non gait motion that may introduce label noise in the classification process. Only data 
+sections with a minimum length of 200 samples are retained. Shorter sections are ignored 
+because they cannot form a complete window and may cause edge effects. 
+Sliding Window Segmentation: 
+A 2 second window (200 samples at 100 Hz) was selected as it would cover around 1.5-2 gait 
+cycles at a typical cadence of walking (100-120 steps per minute), thus allowing the 
+observation of the kinematic signature of one full gait cycle including stance and swing 
+phases. With a 75% overlap, the number of training windows maximizes the amount of 
+subject data without each window being isolated from the others, thus not losing the temporal 
+continuity of gait patterns. This yields around 13-15 windows per gait segment.  
+Per-channel z-score normalisation is intentionally performed in the inner loop of the 
+cross-validation, using fit parameters for the training fold and testing with the test fold, in order to 
+avoid any statistics based on test subjects from being used to directly influence the normalisation 
+parameters. This is a crucial implementation choice that avoids a hidden type of data leakage 
+which is often ignored in time series ML pipelines.  
+D. Early Gait Instability Index Feature Extraction 
+The Early Gait Instability Index (EGI) is the primary methodological contribution of this 
+project. It is a framework for clinical feature engineering which extracts  61 features from 
+every 200×12 IMU window and groups them into five clinically-motivated components, each 
+of which is directly associated with a documented pathomechanical signature relevant to 
+early-stage Parkinson's Disease. 
+In contrast, the baseline SVM model uses a collection of handcrafted statistical and signal 
+processing features computed directly from the raw IMU channels and derived magnitude 
+signals. These include channel wise statistical measures (mean, standard deviation, RMS, 
+range, IQR, skewness, and kurtosis), spectral power features, asymmetry measures, and jerk 
+based smoothness descriptors. However, unlike EGI, these features are not structured into 
+23 
+clinically interpretable components linked to specific gait abnormalities associated with 
+Parkinson’s Disease. There are three engineering justifications for EGI rather than this raw 
+approach. First, EGI offers a clinical basis: each component represents a known PD gait 
+abnormality thereby maintaining model behavior's interpretability for clinicians. Second, 
+regarding the feature organisation, EGI provides a structured one through grouping the 
+related measurements into clinically coherent components, which allows learning from 
+physiologically meaningful representations instead of just a single statistical descriptor. 
+Third, EGI enables feature importance explainability at the component level and makes it 
+possible to explain feature importance in a clinically relevant manner, where feature sets are 
+not that informative. 
+Four bilateral magnitude signals are computed from the 12 raw IMU channels using the L2 
+norm before computing any EGI component. Both Left and Right Acceleration Magnitudes 
+are calculated as follows: 
+L_acc = √((ch0^2) + (ch1^2) + (ch2^2)) 
+R_acc = √((ch6^2) + (ch7^2) + (ch8^2)) 
+and the magnitudes of the bilateral gyroscope as: 
+L_gyr = √((ch3^2) + (ch4^2) + (ch5^2)) 
+R_gyr = √((ch9^2) + (ch10^2) + (ch11^2)) 
+These reduce the three spatial axes to a single signal of locomotion intensity for each ankle. The 
+Z-axis gyroscope channels (L_gyr_z = ch5, R_gyr_z = ch11) are also kept for the Turning 
+component because the vertical axis represents the main turning rotation. These magnitude 
+signals are rotation-invariant and do not require fine-tuning due to small variations in sensor 
+placement orientation across subjects, which is a crucial factor for the successful generalisation of 
+these signals across subjects in clinical IMU datasets.  
+The 61 features extracted by EGI are grouped into five components: Variability, Asymmetry, 
+Tremor, Timing and Turning, described in detail below. 
+Component 1- Variability 
+Dopaminergic malfunction has been correlated with reduced rhythmic gait control, due to basal 
+ganglia dysfunction, which results in an increase in stride to stride variability. This is one of the 
+24 
+earliest and most consistent kinetic features of Parkinson's Disease gait and can be observed at 
+Hoehn and Yahr (H and Y) stage 1 and 2.  
+The extraction of features for this component involves computation of 11 primary values. The 
+main indicator used for assessment is the Coefficient of Variation (CV), which is computed 
+separately for each accelerometer and gyroscope directions using the formula: CV = σ / (μ + 
+ε), where ε = 1 × (10^-10) is introduced in order to avoid dividing by zero. Since this value is 
+normalized, its use allows the comparison of variability between patients with different 
+walking speeds and signal amplitudes. 
+The following statistical descriptors of variability (complementary to max and min) are also 
+calculated for L_acc and R_acc: peak-to-peak range (max- min), interquartile range (P75 - P25), 
+and standard deviation. An addition of 18 directional features are computed by calculating the 
+per- axis mean, standard derivation and RMS for the 6 acceleration channels (L_acc_x/y/z and 
+R_acc_x/y/z), capturing directional gait characteristics that magnitude-based representations 
+alone cannot provide. Together, these constitute the full 29 features of the variability component. 
+The coefficient of variation varies from limb to limb and the variability score is the mean 
+coefficient of variation in both the limbs: 
+variability_score = (CV_L_acc + CV_R_acc) / 2.  
+Component 2: Asymmetry 
+PD is typically begins on one side at Stage 1 and then progresses on the same side, creating an 
+ongoing left-right difference in kinematics that can be directly quantified by measuring the 
+kinematics of the two ankles using bilateral sensors, and is the most clinically direct measure of 
+early unilateral PD onset.  
+Seven features are extracted. The primary measure is the Asymmetry Index, defined as a 
+normalised percentage difference in signal magnitude: 
+100 × |RMS_L − RMS_R| / (RMS_L + RMS_R + ε), 
+where, ε is a constant to prevent the denominator from being zero. This normalised formulation 
+eliminates any confounding effect by individual walking speed and effort, and ensures that the 
+index is subject independent and directly comparable over the cohort.  
+25 
+Additional features include the absolute RMS difference (|RMS_L − RMS_R|), the RMS ratio 
+(RMS_L / (RMS_R + ε)), the absolute mean difference (|μ_L − μ_R|) and the absolute standard 
+deviation difference (|σ_L − σ_R|). Furthermore, L-R correlation coefficient (corrcoef(L_acc, 
+R_acc)) quantifies the temporal synchrony of the two limbs; a high L-R correlation is evidence of 
+high temporal synchrony between the movements of both limbs, which is characteristic of a 
+healthy walker, while a low L-R correlation is characteristic of a PD patient, as their movement in 
+one limb is impaired.  
+Asymmetry index is set to be the component score: asymmetry_score = asym_index. 
+Component 3: Tremor  
+PD is also associated with resting tremor in the frequency band 3-6 Hz. Even though 
+voluntary walking suppresses the presence of classical resting tremor through action 
+inhibition mechanisms, subclinical high-frequency oscillatory activity remains in the lower 
+limb while walking. In particular, higher levels of energy across the spectral band from 3 to 10 Hz 
+compared with the normal gait frequency band 0.5–3 Hz yield a measurable signature of PD in 
+the frequency domain, even when walking. 
+A power spectral density (PSD) is calculated using scipy.signal.periodogram and eight features 
+are extracted. Ankle tremor band power is calculated as the sum of PSD values in the range of 
+3-10 Hz and gait band power is calculated in the 0.5-3 Hz range for each ankle. Thus, the ratio of 
+the power of the tremor and the power of the gait is then defined as: 
+tremor_ratio = tremor_power / (gait_power + ε), 
+which is a measure of the increased amplitude of high frequency pathological activity compared 
+to normal gait rhythm. 
+The Freeze Index (FI), which is a composite measurement, is also calculated as the ratio of the 
+total tremor power to total gait power in both the arms: 
+FI = (tremor_power_L + tremor_power_R) / (gait_power_L + gait_power_R + ε) 
+The above equation is derived based on previously described clinical measurements of Freezing 
+of Gait (FOG). Finally, the mean ratio of bilateral tremors is considered as the third component 
+measure: tremor_score = (tremor_ratio_L + tremor_ratio_R) / 2. 
+Although this component has not yet been adequately separated from other components in the 
+exploratory data analysis (Mann–Whitney U test, p > 0.05), it does not perform well on its own 
+26 
+during walking, as would be expected in a physiology of the suppression of resting tremor during 
+voluntary motion. It is complementary, however, in the context of the overall EGI framework, 
+with the provision of spectral information.  
+Component 4: Timing 
+The presence of Parkinson's disease disrupts the timing circuits in the basal ganglia, leading 
+to impaired regularity and smoothness in gait, which results in diminished rhythmicity, an 
+increase in the jerky nature of movements, and a broader distribution of spectral power. All of 
+these can be quantitatively assessed using IMU signals. For this aspect, seven features are 
+extracted. Spectral entropy is calculated as −Σ p(f) × log(p(f) + ε) based on the normalized 
+power spectral density (PSD) of L_acc, where p(f) denotes the normalized distribution of the 
+spectrum. This quantifies how signal power is spread across different frequencies; a healthy 
+gait typically shows concentrated energy at the primary step frequency, leading to lower 
+entropy, while gait in individuals with Parkinson's disease shows a more distributed spectral 
+energy pattern, indicating irregular timing. 
+Jerk root mean square (jerk_RMS) is the RMS value of the second derivative of L_acc, 
+multiplied by the frequency squared (fs^2). Increased jerk values correspond to decreased 
+smoothness of movements in PD. The smoothness index is defined as 1 / (1 + jerk_RMS), and is 
+bounded for increasingly smooth motion, with higher values indicating smoother motion. Peak 
+Jerk, which is also defined as the maximum absolute second derivative, is used to identify 
+extreme transient movement irregularities. 
+The regularity of stride is measured by the autocorrelation of L_acc at the first prominent peak 
+after a 10 sample lag. The closer the value is to 1, the more periodic the gait is, and the closer to 
+0, the more irregular the stepping pattern. The most dominant gait frequency is the one that has 
+the highest PSD in the 0.5-3Hz range. 
+The component score is computed as a scaled combination of the most discriminative temporal 
+irregularity measures: 
+timing_score = entropy/5 + jerk_rms/1000, 
+in which the scaling factors are to make each term comparable in its numerical range.  
+27 
+Component 5: Turning  
+Turning subtasks of the Timed UP and Go (TUG)  test is particularly impaired in PD. Patients 
+usually show decreased peak angular velocity, multiple-step turning strategy, prolonged 
+turning time, and bilateral gyroscope asymmetry. 
+This component is computed only within Turn windows; all feature values are set to zero 
+within Walk windows according to the is_turn flag. 
+Eight features are extracted from the mean bilateral gyroscope value of Z axis, given by: 
+gyr_z = (L_gyr_z + R_gyr_z) / 2. 
+Four statistical measures such as mean, max, std, and peak-to-peak range of |gyr_z| are used 
+to measure magnitude and variability of turning motion in terms of rotational angle. 
+Rotational jerk is measured as the root-mean-square, RMS, of the first derivative of gyr_z 
+scaled by the sampling frequency fs, where lower values correspond to smooth turning 
+motion. Rotational smoothness index is given by: 
+turn_smoothness = 1 / (1 + turn_jerk_rms). 
+The difference in bilateral RMS of rotational gyroscope values is a measure of turning 
+asymmetry between the left and right feet during the turning process and calculated as: 
+|RMS(L_gyr_z) − RMS(R_gyr_z)| / (RMS_L + RMS_R + ε). 
+Component score calculation formula includes four features and is given by: 
+turning_score = 1.5 × (std/5 + jerk_rms/50 + asymmetry + range/10). 
+These scaling coefficients (1.5, /5, /50, /10) are not learnable parameters; they are 
+normalisation constants selected through experimentation for the purpose of ensuring that all 
+features contribute equally, since otherwise a single feature may predominate within the 
+composite score. 
+Composite EGI Score 
+The five scores are then summed up and normalized to form the final composite index of gait 
+instability for each time window: 
+28 
+EGI = (variability_score + asymmetry_score/30 + tremor_score + timing_score + 
+turning_score) / 5. 
+The asymmetry score is normalized by dividing it by 30 before aggregation, since its unit of 
+measure is percentages (0-100) and the other four components are in the range of 0-1 
+approximately. Otherwise, the asymmetry component will dominate the aggregation process 
+and make the others irrelevant. 
+The is_turn flags  are removed from the feature set used for SVM training. The is_turn flag is 
+not related to physiological measures but more to data provenance. Therefore, incorporating 
+this flag will be a task-identifier that could potentially induce classification bias in the 
+prediction model. Thus, the SVM is trained using only features derived from the EGI, as 
+opposed to 110 features in the original model. 
+E. Machine Learning and Deep Learning Models 
+E1. SVM with EGI- Primary Classical Model 
+A Support Vector Machine (SVM) with a radial function (RBF) kernel (C=10, gamma= 
+‘scale’) was selected as the primary classical classifier. Compared with other models such as 
+Random Forest, Logistic Regression, and k-Nearest Neighbours (k-NN), this algorithm works 
+better with moderate-high dimensional features and few subjects, as margin maximization 
+helps to generalize well and prevent subject-level overfitting. 
+RBF kernel allows building non-linear decision boundaries without explicit feature 
+expansion. Furthermore, inverse frequency class weight balancing is applied for mild class 
+imbalance correction without oversampling in time series data. 
+For implementation, sklearn.svm.SVC with probability=True and group 5-fold 
+cross-validation are used. In each fold, missing values are imputed with column-wise median 
+values from the training set. Then, standard scaling with StandardScaler is applied to the train 
+set only to avoid data leakage. 
+The probabilities obtained from each window for the subject are combined through averaging 
+of all the windows associated with the same subject to get one PD probability measure for 
+each subject. 
+E2. SVM Baseline- Raw IMU without EGI 
+29 
+To measure the contribution of the proposed EGI architecture, a second SVM model using 
+only raw statistical IMU features without clinical engineering is also trained. The features 
+used for the baseline model include independent channel-wise statistical measures such as the 
+mean, standard deviation, RMS, range, IQR, skewness, and kurtosis. In total, 110 features are 
+extracted per window for the baseline model. 
+This baseline acts as a benchmark for comparison between clinically engineered structured 
+features and traditionally unstructured statistically extracted features using the same 
+methodology.  
+E3. 1D CNN with Residual and SE Attention Blocks 
+A one-dimensional convolutional neural network (1D-CNN) working on the 200×12 raw 
+IMU window signals transposed to 12×200 in accordance with the PyTorch channel-first 
+convention was chosen as the first deep learning model for training due to the fact that a 
+convolutional network will be able to detect the temporal patterns of gaits automatically, 
+without any manual feature selection process. 
+The architecture involves four residual blocks with increasing filter sizes from 64 to 256, 
+while the kernel sizes increase from 7 to 3. Skip connections (He et al., 2016) facilitate stable 
+deep convolutional networks by enabling gradient flow in the network. After each residual 
+block, there is an SE (Squeeze-and-Excitation) attention mechanism (Hu et al., 2018), which 
+enables channel-wise re-scaling and learning the relevance of the different IMU channels for 
+the network. This is especially important for gaits' analysis, as the ankle accelerometer and 
+gyroscope have distinct significance for locomotion characterization. 
+Focal Loss, 2.0 is chosen instead of classical cross-entropy because the former gives more 
+weight to hard or ambiguous training samples while down-weighting easy cases to minimize 
+losses due to overfitting. 
+Gaussian noise injection (σ=0.05), amplitude scaling with a uniform distribution between 0.9 
+and 1.1, time-shifting +/-10 samples, and channel dropout, 0.1, augmentation techniques are 
+used only in the train phase. They introduce natural variations for a realistic situation but do 
+not affect class labels. 
+A linear warm-up for 5 epochs is applied before cosine learning rate decay to ensure better 
+initial convergence. Furthermore, there is a 1.6×PD class-weight boost in combination with 
+30 
+frequency-based weights in favour of sensitivity, which is more clinically valuable than 
+specificity. Finally, early stopping with patience=15 is used to get the optimal model in terms 
+of validation-AUC. 
+E4. Hybrid CNN-Transformer Model 
+While the 1D-CNN is able to well capture the local temporal gait patterns, it has limited 
+capability for the model of the long-range dependencies over the entire gait sequence. To address 
+such a drawback, a hybrid CNN-Transformer architecture is proposed. 
+The raw 200×12 IMU sequence is initially processed with a 3-block CNN encoder with SE 
+attention, which cuts the length of the IMU sequence from 200 to 50 and expands the feature 
+dimension from 12 to 128. This enables the Transformer module to learn to understand the 
+higher-level temporal relationships, avoiding the need for low-level signal extraction. 
+A learnable CLS token is attached to the sequence in front of Transformer encoding. The CLS 
+token is used for self-attention to fuse the global sequence-level information for final 
+classification. 
+Pre-LayerNorm (Pre-LN) is employed in the Transformer layers to overcome the problems of 
+standard Post-LN, as it has been proven to be better for optimisation stability and gradient 
+propagation for smaller datasets. The final architecture is composed of 4 attention heads and 2 
+Transformer layers, which is a trade-off of modelling capacity and risk of overfitting. 
+The final model also features data augmentation, learning-rate warmup, focal loss and extended 
+early stopping for better generalisation.  
+E5. ResNet-18 with Recurrence Plot Representation 
+The ResNet-18 model consists of a novel approach to gait classification, which transforms every 
+IMU window into a Recurrence Plot (RP) image and subsequently classifies it as a 2D image 
+classification problem. RPs store temporal gait features such as periodicity, regularity, complexity 
+in a spatial representation which can be analysed by the trained CNN feature detectors.  
+Gaussian-like thresholding has been applied rather than binary threshold to retain graded 
+similarity information. 
+The bilateral asymmetry of the accelerometers (|L_acc − R_acc|) is captured in Channel 1, the 
+average of the bilateral accelerometers (L_acc + R_acc)/2 in Channel 2, and the mean of the 
+31 
+Z-axis of the bilateral gyroscope in Channel 3, resulting in each window being transformed into a 
+3 channel 96×96 RP image. 
+Because there are not enough windows to train an 18-layer CNN from scratch, the pretrained 
+ImageNet CNN is used for transfer learning. The last fully connected layer is followed by a 
+custom classification head (512→256→BatchNorm→GELU→Dropout→2). By using the 
+Mixed-precision training, which includes torch.cuda.amp.autocast, the memory consumption on 
+the GPU can be lower and the training speed can be faster.  
+F. Evaluation Framework 
+Group 5-Fold Cross Validation has been used for all five models. Standard k-fold randomly 
+distributes individual windows among folds, thus enabling that some windows may be present in 
+both training and test sets, even if they come from the same subject. This means that the model 
+ends up learning subject-specific gait signatures instead of generalising PD patterns, which is a 
+severe degree of data leakage that overestimates reported values. GroupKFold puts all windows 
+of a specific subject into only one of the folds, with 100% subject-level separation. 
+The window-level probabilities are averaged over each test fold to calculate a single subject-level 
+PD probability for each fold, which represents a clinically realistic case where a decision is made 
+on a patient level rather than a 2-second window level. So the optimal decision threshold is 
+selected using the Youden's J statistic (J = Sensitivity + Specificity − 1) on the ROC curve at the 
+subject level, instead of the default threshold of 0.5, the statistically correct method for 
+imbalanced binary medical classification that maximises sensitivity and specificity at the same 
+time. Bootstraps with 1000 resamples are calculated for AUC to measure the estimation 
+uncertainty in the H and Y Stage 1 subgroup (n = 10).  
+G. Feature Selection, Ablation, and Attention-Based Interpretability 
+The EGI ablation study removes each of the five component groups one at a time, and the 
+SVM is trained again with the same Group 5-fold cross validation, while the drop in AUC is 
+recorded.The component that leads to the biggest drop in the value of AUC when removed is 
+considered the one carrying maximum information, thereby validating the notion that the 
+constructed groups complement each other discriminatively. 
+32 
+Approximate Shapley values of the SVM probability output are computed using SHAP 
+KernelExplainer with k=100 centroids derived from k-means summarisation of the training set, 
+evaluated on 300 test windows, of which 150 are PD and 150 Control. To represent the training 
+distribution with the summarised distribution without significantly increasing the computational 
+cost, k-means summarisation is used instead of random sampling. The feature-level SHAP values 
+are then combined within each EGI component group to provide component-level attribution, 
+which allows the understanding of the impact of engineered gait mechanisms on classification 
+performance. 
+Attention based interpretability is also taken out of the hybrid CNN–Transformer model in 
+addition to the post hoc attribution.Besides post hoc explanation, attention based interpretability 
+is extracted from the hybrid CNN–Transformer model for further analysis of the internal 
+representation learning. The CLS token is used to get temporal attention in both the 
+Pre-LayerNorm transformer layers and the CLS token is the one that gathers information from 
+every position in the sequence. The CLS-attention weights are separated in every layer and then 
+averaged across the layers by a geometric mean for Parkinson's and control subjects to gain a 
+stable temporal attention profile throughout the gait cycle. 
+Temporal attention differences between classes are quantified using a Mann–Whitney U-test at 
+each gait phase, which determines the gait intervals with a statistically significant difference 
+between the classes in their attention allocation. This yields a statistical characterization of 
+discriminative temporal focus learned by the model, as a function of its position. 
+The Feature-level attention is obtained from Squeeze-and-Excitation (SE) blocks in the CNN 
+encoder that produce channel-wise gating weights on the 128-dimensional feature representation. 
+These weights are the results of adaptive re-calibration of the IMU-derived feature channels. To 
+determine consistently emphasized feature dimensions, mean SE weights are calculated for PD 
+and control groups and compared. 
+SHAP, ablation and attention mechanisms combine to give a multi-layer interpretability 
+framework. The post-hoc feature and component attribution computed by SHAP, the causal 
+evaluation of engineered feature group importance computed by ablation, and the model's 
+attention mechanisms revealed the model's temporal and feature-level focus. Uniformity of these 
+views enhances the trust in patterns learned from data and increases the interpretability of both 
+engineered and deep learned representations.  
+33 
+H. Clinical Stage-Stratified Evaluation Using Hoehn and Yahr 
+The Hoehn and Yahr (H and Y) stratification analysis evaluates the best performing model, 
+the Hybrid CNN-Transformer, on clinically meaningful disease stages. The model is tested on 
+H and Y Stage 1 vs Control, Stage 2 vs Control in addition to its performance on the full 
+dataset.  
+During subject matching, a case sensitivity mismatch between subject IDs in the 
+preprocessed numpy arrays (lowercase) and the clinical CSV (uppercase) was resolved by 
+converting both sides to  lowercase before matching, which ensured all 68 PD subjects were 
+correctly linked to their clinical metadata. 
+H and Y score was then obtained from the clinical metadata and divided into two categories: 
+stage 1, representing unilateral motor dysfunction with minimal functional impairment, and 
+stage 2, representing early bilateral involvement without significant postural impairment. 
+The model was tested in three experimental settings under identical Group 5-fold 
+cross-validation procedure with regard to the following groups –  
+1. all patients diagnosed with Parkinson’s disease vs. control group, 
+2.  Stage 1 Parkinson’s disease vs. control group,  
+3. Stage 2 Parkinson’s disease vs. control group.  
+All experiments were carried out with the same model architecture, preprocessing pipeline, 
+and hyperparameters configuration. Given that there is only a small number of Stage 1 
+patients, the bootstrap method with 1,000 samples was used to calculate the 95% confidence 
+intervals of AUC metrics. 
+The results obtained through this stratified approach showcase the capabilities of the 
+algorithm at various levels of severity of the disease, proving its efficiency in recognizing 
+Parkinson’s disease at the earliest stages of development. 
+34 
+Table 3.1: Software Tools used for our project 
+Tool Function Other Similar 
+Tools 
+Why Selected 
+Python 3.10 Primary 
+programming 
+language for all 
+pipeline stages 
+R, MATLAB, 
+Julia 
+Dominant language in ML/DL 
+research 
+NumPy / 
+SciPy 
+Signal processing, 
+bandpass filtering, 
+windowing, 
+statistical tests, 
+periodogram, RP 
+generation 
+MATLAB 
+Signal Toolbox 
+Fast vectorised operations; 
+signal.butter, filtfilt, periodogram 
+built-in 
+Pandas Data loading, feature 
+dataframe 
+construction, EDA 
+Polars, Dask A general table tool that can be 
+directly integrated with scikit-learn 
+Scikit-learn SVM, GroupKFold 
+CV, StandardScaler, 
+ROC/AUC metrics 
+Weka, 
+RapidMiner 
+Only major ML library which has 
+native implementation of 
+GroupKFold for subject-level 
+leakage prevention.  
+PyTorch 2.x 1D-CNN, Hybrid 
+CNN-Transformer, 
+ResNet-18 training 
+TensorFlow/Ker
+as, JAX 
+Dynamic computation graph 
+enables flexible custom 
+architecture design 
+TorchVision Pretrained 
+ResNet-18 with 
+ImageNet weights 
+timm Official PyTorch library; 
+standardised pretrained model 
+loading 
+35 
+Tool Function Other Similar 
+Tools 
+Why Selected 
+Python 3.10 Primary 
+programming 
+language for all 
+pipeline stages 
+R, MATLAB, 
+Julia 
+Dominant language in ML/DL 
+research 
+SHAP KernelExplainer for 
+SVM 
+component-level 
+attribution 
+LIME, Captum Model-agnostic, theoretically 
+grounded Shapley values, built-in 
+visualisation 
+Matplotlib / 
+Seaborn 
+ROC curves, 
+confusion matrices, 
+box plots, radar 
+charts, attention 
+heatmaps 
+Plotly, Bokeh Static figures without moving 
+parts and direct integration with 
+NumPy;  
+Kaggle 
+Notebooks 
+(GPU) 
+Cloud training with 
+NVIDIA Tesla P100 
+16GB 
+Google Colab, 
+local CUDA 
+Free GPU quota, persistent output 
+storage, native dataset integration 
+synapseclien
+t SDK 
+Authenticated 
+programmatic 
+download filtered by 
+H and Y ≤ 2.0 
+Direct browser 
+download 
+Reproducible automated retrieval 
+without manual file selection 
+ 
+ 
+ 
+ 
+ 
+36 
+Chapter 4 Investigation/Experiment, Result, Analysis and 
+Discussion 
+4.1 Dataset Overview and Window Extraction Results  
+The raw IMU recordings were divided into overlapping 2-second windows containing 200 
+samples at 100 Hz, with a 75% overlap, or a step of 50 samples. Walking and turning events 
+were extracted separately using the event labels in the dataset, resulting in a total of 12,079 
+windows across all subjects.  
+Table 4.1: Preprocessing Output  
+Data Type 
+Walk 
+Shape 
+(10098, 200, 12) 
+Control 
+Windows 
+6017 
+PD Windows Total (PD window 
++ control window 
+4081 
+Turn 
+Total 
+(1981, 200, 12) 
+(12079, 200, 12) 
+1228 
+7245 
+753 
+4834 
+10,098 
+1,981 
+12,079 
+Here, the shape represents 9windows x sample x channel), 12 IMU channels per window 
+(3-axis accelerometer + 3-axis gyroscope from both left and right ankles), a total of 12,079 
+windows were generated across all individuals. Each window spans 2 seconds, 200 samples 
+at 100 Hz. Due to the disparity in subject count (82 controls vs. 68 PD), the class distribution 
+is unbalanced, with 7,245 control windows (59.9%) and 4,834 PD windows (40.1%). 
+Inverse-frequency class weighting was used in all models to address this imbalance. 
+37 
+4.2 EGI Component Score Analysis 
+Each of the five EGI component scores was statistically assessed between the PD and healthy 
+control groups using Cohen's d effect size and the Mann-Whitney U test across all 12,079 
+windows following the extraction of 61 characteristics per window using the Early-Stage Gait 
+Index (EGI) framework.  
+Table 4.2: EGI Component Score Distributions: PD vs. Control (All Windows) 
+Component Control 
+(mean ± std) 
+PD (mean ± 
+std) 
+Cohen's d p-value Sig. 
+variability_score 0.9334 ± 
+0.171 
+0.8954 ± 
+0.154 
+−0.233 0.0000 *** 
+asymmetry_score 10.3829 ± 
+10.565 
+9.1294 ± 
+9.128 
+−0.127 
+ 
+0.0000 *** 
+tremor_score 0.5257 ± 
+0.173 
+0.5180 ± 
+0.177 
+−0.044 0.0330 * 
+timing_score 7.0136 ± 
+2.976 
+7.9041 ± 
+3.496 
++0.274 0.0000 *** 
+turning_score 
+(turn windows 
+only) 
+1.2184 ± 
+0.424 
+1.2492 ± 
+0.427 
++0.072 0.0248 * 
+EGI (composite) 1.8051 ± 
+0.566 
+1.9633 ± 
+0.692 
++0.250 0.0000 *** 
+(Significance: *** p<0.001, ** p<0.01 , * p<0.05, ns = not significant) 
+ 
+38 
+Analysis of component scores: 
+The Variability Score showed a significant negative effect (d = −0.233, p < 0.001), indicating 
+that individuals with PD have a lower degree of variability in step length than individuals 
+without PD. This is surprising, as one would expect persons with PD to have greater 
+variability in step length; however, due to stiffness in the motor system associated with PD, 
+persons with PD will have a consistently and uniformly abnormal gait rather than a normal 
+and healthy gait. 
+The Asymmetry Score was also statistically significant (d = −0.127, p < 0.001) and identified 
+individuals with PD to have less acceleration between their left and right ankles. The 
+asymmetrical gait pattern corresponds with the clinical observation that individuals with PD 
+may initially present with greater clinical signs of motor disability on one side of their body, 
+thereby displaying a statistically significant difference in acceleration between their two legs. 
+The Tremor Score of the composite measure was found to have a small but statistically 
+significant difference (d = −0.044, p = 0.033). This finding is not surprising because, when 
+people with PD are actively walking or performing another activity that inhibits them from 
+using their strength to walk (like resting), they will not have any tremors to measure on an 
+ankle sensor while walking. However, when the EGI was developed, the SHAP analysis 
+demonstrated that there are still some subtle frequency domain shifts in resting tremor that 
+can be attributed to the tremor score with a contribution of 13.4% of the predictive signal for 
+the EGI. 
+The Timing Score had the largest positive effect (d = +0.274, p < 0.001), indicating that 
+individuals with PD have more irregular and jerky movement patterns than controls and are 
+more unpredictable in their movement patterns. This finding corresponds to the established 
+clinical observation that the basal ganglia are responsible for the rhythm and smoothness of 
+movement, and therefore disruption to the basal ganglia in PD would result in a 
+corresponding disruption of rhythm and smoothness in gait. 
+The Turning Score, which was based entirely on turning events, demonstrated a statistically 
+significant difference (d = +0.072, p = 0.028) in that the group of PD patients showed greater 
+angular velocity irregularity when they turned. 
+39 
+The composite EGI score (d = +0.250, p < 0.001) was superior to using any of the five 
+individual components of the EGI measured individually and ranked 10th out of 61 in terms 
+of predictive power; this finding indicates that using all five components together into a 
+single value provides a stronger and more comprehensive discriminator than any one measure 
+alone. 
+Table 4.3: Top 15 Most Discriminative EGI Features by |Cohen's d| 
+Rank Feature Cohen's d p-value 
+1 R_acc_x_rms +0.3643 0.0000 
+2 R_acc_x_std +0.3638 0.0000 
+3 var_iqr_L +0.3004 0.0000 
+4 L_acc_x_rms +0.2949 0.0000 
+5 L_acc_x_std +0.2945 0.0000 
+6 var_iqr_R +0.2882 0.0000 
+7 timing_jerk_rms +0.2759 0.0000 
+8 timing_score +0.2743 0.0000 
+9 gait_power_L +0.2576 0.0000 
+10 EGI (composite) +0.2503 0.0000 
+11 timing_jerk_max +0.2468 0.0000 
+12 var_cv_L_gyr −0.2439 0.0000 
+40 
+Rank 
+13 
+14 
+15 
+Feature 
+variability_score 
+var_std_L 
+R_acc_z_std 
+Cohen's d 
+−0.2334 
++0.2242 
++0.2177 
+p-value 
+0.0000 
+0.0000 
+0.0000 
+Notably, features from lateral (x-axis) acceleration from both ankles (R_acc_x_rms, 
+R_acc_x_std, L_acc_x_rms, L_acc_x_std) ranked highest: PD more clearly affects 
+side-to-side balance control than forward-backward movement, and lateral ankle acceleration 
+directly captures this side-to-side instability. Smoothness of motion is one of the best 
+discriminators, as confirmed by the timing jerk rms and max (ranks 7 and 11). Interestingly, 
+every one of the top 15 traits achieved p < 0.001 significance, indicating that these are strong 
+statistical differences rather than chance findings.  
+Figure 4.2a: EGI Component Score Distributions: PD vs. Control across all 5 gait 
+dimensions (Mann-Whitney U test; *** p<0.001, * p<0.05)  
+EGI Component Score Box Plots: Box plots of the five EGI scores; variability, asymmetry, 
+tremor, timing, and turning, for the PD and control groups over 12,079 windows are 
+displayed. Cohen's d and p-values are shown in each plot to verify which scores differ 
+statistically between the two groups. 
+41 
+Figure 4.2b: EGI Component Profile Radar Chart: Normalized PD vs. Control group 
+means across the five EGI dimensions (higher = more abnormal) 
+EGI Radar Chart: The average EGI scores of the PD and control groups are compared 
+simultaneously across all five dimensions in this polar graphic. In comparison to healthy 
+controls, a bigger PD area on any axis indicates greater gait abnormalities in that dimension. 
+4.3 Experiment 1: SVM Without EGI (Raw IMU Baseline) 
+Setup: We collected 110 features from raw motion sensor data, comprising seven 
+channel-wise statistical measures such as mean, standard deviation, RMS, range, 
+IQR,skewness, and kurtosis. Input features such as frequency, smoothness, asymmetry of the 
+left and right side of the body, average, variance, and peak were used for an algorithm known 
+as Support Vector Machine (SVM) in order to classify different patients. In order to eliminate 
+any potential bias, none of the data points of any patient were included in both training and 
+testing processes, which was achieved via the application of 5 fold cross validation. The 
+decision threshold point of the classification process was optimized using Youden's J criterion 
+in order to maximize sensitivity and specificity simultaneously. The prediction scores of 
+patients were computed using an additional scheme for all segments of their data points. 
+This baseline was designed to evaluate the contribution of EGI framework by comparing 
+clinically organised features against unstructured raw statistical descriptors using the same 
+classifier. 
+42 
+Table 4.4: Raw SVM Subject-Level Classification Report (Youden's J threshold = 
+0.2167) 
+Metric 
+AUC-ROC 
+Accuracy 
+Score 
+0.6485 
+60.4% 
+Sensitivity 
+Specificity 
+F1-Score 
+85.29% 
+39.51% 
+0.6629 
+Analysis: 60.5% of healthy control volunteers were mistakenly identified as PD patients, 
+despite the high sensitivity (85.3%) and extremely low specificity (39.5%). Barely over 
+chance, an AUC of 0.6485 indicates only weak discriminative ability. The primary reason is 
+that while raw statistical features have the same information content as EGI features, they 
+lack clinical structure. Without this structure, the model is unable to distinguish between 
+normal inter-subject variance and abnormal patterns associated with gait. The model's poor 
+accuracy is demonstrated by the extremely low threshold (0.2167) needed to reach this 
+sensitivity. This outcome acts as the starting point for evaluating the impact of any further 
+advancements. 
+43 
+Figure 4.3: Subject-Level Confusion Matrix and ROC Curve of SVM Using Raw IMU 
+Features  
+Confusion Matrix and ROC Curve of SVM(raw IMU): This figure shows the classification 
+outcome of the SVM trained on raw IMU features, with an AUC of 0.649 and a subject-level 
+accuracy of 60.4%. Due to its extremely low specificity of 39.5%, the model is clinically 
+unhelpful because it flags nearly everyone as having Parkinson's disease (PD) in order to 
+achieve high sensitivity.  
+4.4 Experiment 2: SVM with EGI Framework 
+Setup: 60 EGI-derived features were used to train the same SVM (RBF kernel, C=10, 
+gamma=scale) with the “is_turn” flag removed as it acts as a data provenance marker rather 
+than a gait feature. Inverse frequency class weights were used: PD = 1.249, Control = 0.834, 
+to address mild class imbalance. Similar to the raw SVM baseline, group 5-fold 
+cross-validation was employed.  
+44 
+Table 4.5: SVM + EGI Full Performance 
+Metric 
+AUC-ROC 
+Window-Level 
+0.7026 
+Subject-Level 
+(threshold=0.5) 
+0.7603 
+Subject-Level 
+(Youden's J=0.391) 
+0.7603 
+Accuracy 
+Sensitivity 
+Specificity 
+F1-Score 
+0.6527 
+0.5941 
+0.6918 
+0.5779 
+0.6913 
+0.7794 
+0.6173 
+0.6974 
+— 
+0.7794 
+0.6173 
+— 
+Analysis: In every important measure, the EGI framework beat out the raw-feature SVM. For 
+example, accuracy increased from 60.4% to 69.1%(8.7% increase), AUC from 0.6485 to 
+0.7603(0.1118 increase), but the most important increase is in specificity; from 39.5% to 
+61.7%(22.2% increase). This increase in specificity is the most important clinical outcome 
+because it will significantly reduce the number of false positives, since the features provided 
+to this model will effectively separate diseased vs. normal gait variation. The EGI-SVM does 
+this while providing a true balance between specificity and sensitivity as compared to the raw 
+SVM, where raw SVM achieved high levels of sensitivity only through basically predicting 
+that all participants have Parkinson Disease; this is clinically meaningless. 
+45 
+Figure 4.4a: SVM + EGI Framework — Window-Level and Subject-Level Confusion 
+Matrices and Subject-Level ROC Curve  
+Confusion Matrices and ROC Curve(SVM+EGI): This displays the ROC curve (AUC = 0.76) 
+for the EGI-enhanced SVM in addition to window-level and subject-level confusion matrices. 
+Specificity increased from 39.5% to 61.7% when EGI characteristics were added, indicating 
+that far fewer healthy individuals were mistakenly classified as having Parkinson's disease.    
+Figure 4.4b: Scientific Impact of EGI Framework: Subject-Level Metric Comparison, 
+Metric Improvement (∆), and ROC Curve Comparison (Baseline AUC=0.649 vs EGI 
+AUC=0.760) 
+46 
+EGI Impact Dashboard: This multi-panel figure displays metric improvements and combined 
+ROC curves while comparing the raw SVM and EGI-SVM side by side. Clinically organized 
+features outperform raw statistics by a large margin, as demonstrated by the EGI framework's 
++0.112 AUC increase.  
+4.4.1 EGI Ablation Study 
+An ablation research was carried out in which one component was removed at a time and the 
+entire Group 5-fold CV was rerun in order to evaluate the individual contributions of each 
+EGI component.  
+Table 4.6: EGI Ablation Study Results (Subject-Level, Group 5-Fold) 
+Configuration 
+All components 
+(baseline) 
+AUC 
+0.7603 
+Accuracy 
+0.6913 
+Sensitivity 
+0.7794 
+Features 
+60 
+AUC Drop 
+— 
+Drop Variability 
+0.7542 
+Drop Asymmetry 0.7436 
+Drop Tremor 
+Drop Timing 
+Drop Turning 
+0.7682 
+0.7531 
+0.7556 
+0.6846 
+0.6779 
+0.6846 
+0.6711 
+0.6846 
+0.5294 
+0.5294 
+0.5735 
+0.5441 
+0.5441 
+49 
+52 
+52 
+53 
+52 
+−0.0062 
+−0.0167 
++0.0078 
+−0.0073 
+−0.0047 
+Analysis: The largest reduction of the AUC (−0.0167) occurred when dropping asymmetry 
+after dropping its most important EGI component for the SVM classifier. This is in keeping 
+with clinical reality, as early stages of PD are typically unilateral, so bilateral asymmetry in 
+ankle movement provides one of the most clear indicators of early-stage PD. The second 
+47 
+largest decrease in AUC was associated with dropping variability (−0.0062), followed by 
+timing (−0.0073) and turning (−0.0047). Interestingly, removing tremor caused a very small 
+increase in the AUC (+0.0078), which may be due to the fact that the discriminability of 
+tremor as a distinguished feature of gait is very low when performing gait evaluations. For all 
+cases, the sensitivity of the resulting split was significantly lower than the overall sensitivity 
+(from 0.7794 to 0.5294–0.5735), indicating the importance of including all five EGI 
+components to provide a meaningful diagnostic signal. This supports the EGI framework, 
+where no single EGI component is sufficient, and collectively, all five EGI components 
+capture the various aspects of the Parkinsonian gait to yield the best diagnostic signal. 
+Figure 4.4.1: EGI Ablation Study; Impact of Removing Each Component on 
+Subject-Level AUC (baseline = 0.760; red = significant drop, orange = minor drop) 
+EGI Ablation Study Bar Chart:  This bar graph illustrates how the AUC decreases as each 
+EGI component is eliminated separately. Asymmetry removal resulted in the largest decrease 
+(−0.0167), although tremor removal marginally increased AUC, indicating that tremor is less 
+helpful when walking actively. 
+4.5 SHAP Explainability Analysis 
+To measure each feature's contribution to predictions, the SVM+EGI model was subjected to 
+SHAP (SHapley Additive exPlanations) analysis. 300 stratified test windows (150 PD + 150 
+Control) with 500 Monte Carlo samples each were explained by a KernelExplainer using 100 
+k-means background samples. Each of the 60 features was correctly mapped to its 
+corresponding EGI component. 
+48 
+Table 4.7: EGI Component Contributions: SHAP based 
+Rank Component SHAP % of EGI N Features 
+1 
+Variability  
+0.5334  61.8%  29  
+2 
+Turning  
+0.1218  14.1%  8 
+3 
+Tremor  
+0.1156  13.4%  8 
+4 
+Asymmetry  
+0.0718  8.3%  7 
+5 
+Timing  
+0.0208  2.4%  7 
+Total EGI 
+—  0.8634 100% 60 
+Key SHAP findings: 
+● Total EGI SHAP value: 0.8634 
+● Best single feature: R_acc_y_std (SHAP = 0.0974) 
+● Composite advantage: 8.9× stronger than any single feature 
+● Most important component: Variability 
+● Least important component: Timing 
+Analysis: The combined EGI SHAP score (0.8634) is 8.9× higher than the next best single 
+feature, confirming that no single gait measure is enough; multiple dimensions together give 
+a far clearer signal of Parkinson's disease. 
+ 
+ 
+ 
+49 
+The EGI scores: 
+● Variability (61.8%); the dominant pathway. Step-to-step acceleration consistency, 
+especially lateral (x-axis) and sagittal (y-axis), were the top individual features across 
+both feet. 
+● Turning (14.1%); pivoting actions delivers comprehensive details about PD-related 
+motor deficits.  
+● Tremor (13.4%); despite tremor not significantly separating PD vs. non-PD groups by 
+statistical measures (p = 0.033), it nevertheless contributed importantly, suggesting 
+delicate shifts in the frequency domain during walking even when the averages 
+between groups appear similar.  
+● Asymmetry (8.3%) & Timing (2.4%); reduced SHAP scores, but asymmetry became 
+crucial in ablation testing: removing it failed model effectiveness, because its features 
+contribute to establishing a key decision boundary even if each feature's individual 
+contribution looks small.  
+SHAP vs. Ablation: SHAP quantifies the influence of each attribute on an output; ablation 
+measures what breaks when a whole component is removed. Asymmetry scores low on 
+SHAP on the other hand is structurally essential; a small piece that connects the structure. 
+Figure 4.5a: SHAP Component Contributions: EGI component-level attribution (left) 
+and composite EGI vs. best single feature advantage;  
+SHAP Component Contributions: This two-panel image compares the entire composite EGI 
+to the single best feature (right) and displays the overall SHAP contribution of each EGI 
+50 
+component (left). The composite EGI is 8.9× stronger than any one trait alone, with 
+variability dominating at 61.8%. 
+Figure 4.5b: Top 20 EGI Features Driving PD Prediction; Mean |SHAP value| coloured 
+by EGI component  
+Top 20 EGI Features (SHAP Bar Chart): Each bar in this horizontal bar chart is colored 
+according to its EGI component, and the top 20 EGI features are ranked by mean SHAP 
+value. The highest ranking lateral acceleration features from both ankles indicate that PD 
+primarily impairs side-to-side balance rather than forward motion. 
+51 
+Figure 4.5c: SHAP Summary Plot;  EGI Feature Impact on P(PD): dot colour indicates 
+feature value (red=high, blue=low)  
+SHAP Beeswarm Plot: Individual SHAP values for each test window across the top features 
+are displayed in this plot; the dot color indicates whether the feature value was low (blue) or 
+high (red). It shows which way each feature has an impact; for instance, a larger right ankle 
+acceleration variability regularly pushes the prediction in the direction of Parkinson's disease. 
+52 
+Figure 4.5d: SHAP Waterfall Plots; Individual Prediction Explanations for a 
+High-Confidence PD Sample (P=0.984, left) and a Control Sample (P=0.001, right) 
+SHAP Waterfall Plots: The model's prediction for one high-confidence PD sample (P = 
+0.984) and one control sample (P = 0.001) is broken down in these two graphs, which 
+demonstrate the precise amount that each feature increased or decreased the score. As a 
+result, the model's choice is clear and understandable for each patient. 
+4.6 Experiment 3: 1D Convolutional Neural Network 
+Setup: Bypassing feature engineering completely, the 1D-CNN was trained directly on raw 
+IMU time-series windows (shape: N × sample(200) × channel(12)). Squeeze-and-Excitation 
+(SE) channel attention was applied to residual blocks in the model. Focal Loss (γ=2.0), 4-way 
+data augmentation(noise + scale + time-shift + channel-dropout), AdamW optimizer, warmup 
++ cosine learning rate schedule, and patience=15 early stopping were all used during training. 
+The weight of the PD class was increased by ×1.6 (Control=0.834, PD=1.999). 
+53 
+Table 4.8: 1D-CNN Classification Results 
+Metric Window-Level Subject-Level 
+Accuracy 72.13%             76.51%  
+Sensitivity 69.30%  83.82%  
+Specificity 74.02%  70.37%  
+F1-Score 0.6656             0.7651  
+AUC-ROC 0.7855  0.8228  
+AUC 95% CI (Bootstrap) — [0.756 – 0.889]  
+Optimal Threshold 
+(Youden's J) 
+— 0.4108  
+Analysis: The 1D-CNN significantly outperformed the SVM+EGI in all essential metrics. 
+The subject-level AUC increased from 0.7603 to 0.8228 (+0.0625), and the bootstrap 95% 
+Confidence Interval (CI) of [0.756 - 0.889] indicates that this is a dependable finding. The 
+largest gain compared to the SVM+EGI was seen in AUC and overall accuracy(+7.4%), 
+while sensitivity improved by +5.88%; thus, the CNN is able to identify considerably more 
+true PDs. This is particularly crucial as a clinician's tool for screening patients, where a 
+missed diagnosis can be quite costly. Other trade-off levels are noted, where specificity 
+decreased by 9.93% while the overall change in F1-score of +0.1531 denotes a greater overall 
+balance of the CNN. By learning directly from raw time-series data, the CNN's convolutional 
+filters are able to detect more subtle temporal patterns in ankle acceleration dynamics, which 
+even very well-designed EGI features do not completely capture. 
+54 
+Figure 4.6: 1D-CNN PD Detection Results: Confusion Matrix, ROC Curve and 
+SVM+EGI vs 1D-CNN metric comparison 
+Confusion Matrix, ROC Curve, and SVM vs. CNN Comparison(1D CNN): The subject-level 
+confusion matrix (Acc = 76.5%, Sens = 83.8%), ROC curve (AUC = 0.823, 95% CI 
+[0.756–0.889]), and grouped bar chart comparing the 1D-CNN to SVM+EGI are all 
+displayed in this three-panel graphic. The CNN greatly outperforms the manually created 
+EGI features in every metric and learns straight from raw time-series. 
+4.7 Experiment 4: Hybrid CNN-Transformer 
+Setup: A CNN encoder, two Pre-LayerNorm Transformer layers, and a CLS classification 
+token were all merged in the Hybrid CNN-Transformer. Focal Loss (γ=2.0), AdamW 
+(lr=0.0005, weight_decay=0.01), 5-epoch warmup + cosine decay, patience=15, and the same 
+4-way augmentation as the 1D-CNN were employed for training. 
+Table 4.9: Hybrid CNN-Transformer Results 
+Metric 
+Accuracy 
+Window-level 
+72.46% 
+Subject-level(Youden's J 
+threshold = 0.4694) 
+Sensitivity 
+Specificity 
+68.20% 
+75.31% 
+79.87%  
+80.88%  
+79.01%  
+55 
+Metric 
+F1-Score 
+AUC-ROC 
+Window-level 
+0.6647 
+0.7897 
+Subject-level(Youden's J 
+threshold = 0.4694) 
+0.7857  
+0.8544  
+Analysis: Overall, the Hybrid CNN-Transformer model produced significantly better results 
+than all other models on four of five metrics: AUC = 0.8544; accuracy = 79.87%; specificity 
+= 79.01%; and F1 score = 0.7857. The most clinically relevant achievement is the 
+near-perfect balance between sensitivity (80.88%) and specificity (79.01%) - only a 1.87% 
+difference between the two. This is the ideal characteristic for a clinical screening tool; giving 
+a ~4/5 ratio for correctly identifying PD patients and correctly ruling out "normal" 
+individuals. From the 1D-CNN, there was a +0.036 AUC improvement in performance and 
+an increase of 3.4% in accuracy, with a +8.6% increase in specificity and a relatively small 
+decrease in sensitivity of only -2.9%, making this tradeoff work very much in favor of the 
+Hybrid CNN-Transformer. The improvement can be attributed to the use of the Transformer's 
+self-attention mechanism that focuses on the most informative time segments in each 2 
+second window and thus avoids unwanted noise in unreliable segments of the gait cycle. 
+Figure 4.7: Hybrid CNN-Transformer PD Detection Results: Confusion Matrix 
+(Acc=79.9%) and Subject-Level ROC Curve (AUC=0.854)  
+Confusion Matrix and ROC Curve(Hybrid CNN-Transformer):  This displays the results of 
+the top-performing model, which has an AUC of 0.854 and a subject-level accuracy of 
+56 
+79.9%. With sensitivity (80.88%) and specificity (79.01%) deviating by less than 2%, the 
+confusion matrix shows a nearly equal error balance, which is perfect for clinical screening. 
+4.8 Experiment 5: ResNet-18 with Recurrence Plot Representations 
+Setup: Three 96x96 recurrence plot images representing bilateral asymmetry, bilateral 
+intensity, and bilateral gyroscope Z-axis rhythm were created from each 2-second IMU 
+window. A pretrained ImageNet ResNet-18 with a custom classification head received these 
+stacks as a three-channel input. The training method employed was mixed-precision (AMP). 
+Table 4.10: ResNet-18 + RP Subject-Level Results 
+Metric 
+AUC-ROC 
+Accuracy 
+Score 
+0.8025 
+76.51% 
+Sensitivity 
+Specificity 
+F1-Score 
+Optimal Threshold 
+76.47% 
+76.54% 
+0.7482 
+0.5135 
+Analysis: ResNet-18 obtained an area under the curve (AUC) of 0.8025, an accuracy level of 
+76.51%, and was the most equally balanced sensitivity and specificity of all five models to 
+each other: 76.47% vs 76.54%; a difference between them of 0.07 percentage points. The 
+close match between the numbers for sensitivity and specificity were due to the fact that the 
+optimal threshold (0.5135) falls almost directly on 0.5 which demonstrates that the 
+probability outputs of the ResNet-18 are correctly well-aligned. Recurrence plots allow the 
+temporal elements of the data to be represented as spatial elements in a 2D format therefore 
+allowing for the pre-trained ImageNet features to generalize well to this application. Despite 
+57 
+these positive results, the ResNet-18 does not outperform the Hybrid CNN-Transformer 
+(AUC 0.8025 vs. 0.8544), implying that the temporal dynamics learned directly from 
+time-series by the Transformer model using its attention mechanism are more discriminative 
+than the 2D structural representations identified in the recurrence plots. 
+Figure 4.8: ResNet-18 + Recurrence Plots PD Detection Results: Confusion Matrix, 
+Clinical ROC Curve, and Diagnosis Probability Distribution   
+Confusion Matrix, ROC Curve, and Probability Distribution(ResNet-18 + Recurrence Plots): 
+The ResNet-18 results (Acc = 76.5%, AUC = 0.803) are displayed in this three-panel figure 
+using 96x96 recurrence plot images as input rather than raw data. Although it is not as 
+effective as the Hybrid CNN-Transformer, the probability distribution demonstrates a good 
+separation between the PD and control groups. 
+4.9 Comprehensive Model Comparison 
+The same 149-subject dataset and the same Group 5-fold cross-validation parameters were 
+used to assess each of the five models. Mean probability aggregation was used to derive 
+subject-level predictions, and all models were subjected to the same Youden's J threshold. 
+Table 4.11: Subject-Level Performance: All 5 Models (Youden's J threshold) 
+Model 
+M1: SVM (Raw IMU) 
+AUC Accuracy Sensitivity Specificity F1-Score 
+0.6485  
+0.6040  
+0.8529  
+M2: SVM + EGI 
+0.7603  
+0.6913  
+0.7794  
+0.3951  
+0.6173  
+0.6629  
+0.6974  
+58 
+Model 
+M3: 1D-CNN 
+M4:Hybrid 
+CNN-Transformer 
+M5: ResNet-18 + RP 
+Best per metric: 
+AUC Accuracy Sensitivity Specificity F1-Score 
+0.8228  
+0.8544  
+0.8025  
+0.7651  
+0.7987  
+0.7651  
+● AUC-ROC: Hybrid CNN-Transformer (0.8544) 
+● Accuracy: Hybrid CNN-Transformer (79.87%) 
+0.8382  
+0.8088  
+0.7647  
+0.7037  
+0.7901  
+0.7654  
+0.7651  
+0.7857  
+0.7482 
+● Sensitivity: SVM Raw IMU (85.29%); but clinically invalid due to 39.5% specificity 
+● Specificity: Hybrid CNN-Transformer (79.01%) 
+● F1-Score: Hybrid CNN-Transformer (0.7857) 
+Analysis: The transition from M1 to M4 paints a clear picture. Starting with M1 (raw SVM), 
+the data clearly show there is not enough structure in the features and sensitivity has to be 
+high at the expense of generally poor specificity; therefore not useful for clinical purposes. 
+Moving on to M2 (SVM+EGI), adding clinical structure to the features significantly 
+improves both specificity and AUC; however, the linear SVM decision boundary is unable to 
+take full advantage of the complex non-linear relationships present in gait data. In M3 
+(1D-CNN), using deep learning on raw time series allows for the capturing of non-linear 
+patterns that result in much higher both sensitivity and AUC than any previously hand-crafted 
+features. Adding a global temporal context through attention (M4, Hybrid CNN-Transformer) 
+results in dramatically improved diagnostic accuracy because M4 achieved the highest 
+sensitivity/specificity balance of all models tested. Using 2D representations of signals (M5, 
+ResNet-18+RP) provides additional evidence that 2D representations are a competitive 
+option; they just did not achieve the peak performance of the Transformer. 
+59 
+Table 4.13: Gait Phase Fused Attention Analysis: PD vs. Control (Mann-Whitney U) 
+Model 
+M2: SVM + EGI 
+ΔAUC 
++0.1118  
+ΔAccuracy 
++0.0872  
+ΔSensitivity -0.0735  
+ΔSpecificity 
++0.2222  
+M3: 1D-CNN 
+M4: Hybrid 
+CNN-Transformer 
+M5: ResNet-18 + 
+RP 
++0.1743  
++0.2059  
++0.1540  
++0.1611  
++0.1946  
++0.1611  -0.0147  -0.0441  -0.0882  
++0.3086  
++0.3951  
++0.3704  
+Analysis: Overall, the +0.2059 AUC difference between the Hybrid CNN-Transformer and 
+the raw SVM baseline indicates a clinically meaningful further increase in diagnostic 
+accuracy. 
+Figure 4.9: Comprehensive Model Comparison; All 5 Models: Subject-Level Metrics 
+Bar Chart, ROC Curves(WearGait-PD) 
+All Models Comparison(Bar Chart, ROC Curves,): This two-panel dashboard uses grouped 
+bars, combined ROC curves to compare all five models side by side. With the highest AUC, 
+60 
+accuracy, specificity, and F1-score, it is evident that the Hybrid CNN-Transformer is the best 
+model overall. 
+4.10 Transformer Attention Map Analysis 
+Attention weights were retrieved from both Pre-LN Transformer layers over all 2,416 test 
+windows (1,009 PD and 1,407 Control) in order to determine which parts of the 2-second gait 
+window the Hybrid CNN-Transformer model prioritized for its judgments. After two 
+MaxPool(2) layers in the CNN encoder had reduced the original 200-sample input to 50 
+sequence positions (approximately 40 ms gait periods), the geometric mean of Layer 1 and 
+Layer 2 attention weights was taken to create a strong fused attention signal.  A temporal 
+importance profile was created using the CLS token's attention to signify places 1–50. The 
+geometric mean of Layer 1 and Layer 2 attention was utilized to calculate a fused attention, 
+which concurrently reinforced positions that were significant in both layers. 
+Table 4.13: Gait Phase Fused Attention Analysis: PD vs. Control (Mann-Whitney U) 
+Gait Phase 
+Loading response + 
+mid-stance (0–600 ms) 
+PD Mean 
+0.0143  
+Control 
+Mean 
+0.0145  
+Difference p-value Sig. -0.0001  
+0.6955  
+Terminal stance + pre-swing 
+(600–1200 ms) 
+Initial swing (1200–1600 
+ms) 
+Terminal swing (1600–2000 
+ms) 
+0.0209  
+0.0175  
+0.0179  
+0.0201  
+0.0172  
+0.0171  
++0.0008  
++0.0003  
++0.0008  
+0.0002  
+0.2409  
+0.0456  
+ns 
+***  
+ns 
+* 
+61 
+Outcomes: 
+● Terminal stance + pre-swing (600–1200 ms) is the most discriminative phase (highest 
+absolute attention difference, p = 0.0002***) . 
+● Significant time positions: p < 0.05 differences between PD and Control were found 
+in 36 out of 50 total locations. 
+Analysis:  
+● The model paid significantly more attention to PD subjects during the terminal stance 
+and pre-swing period (600–1200 ms). This phase of gait corresponds to ankle 
+push-off, where the foot actively pushes off to project the center of mass forward. 
+● Decreased ankle push-off dynamics is a well-established pathological impairment in 
+PD gait leading to reduced stride length and abnormal foot-ground contact timing. 
+Without explicit instruction or labels, the model focused independently on this 
+clinically relevant window. 
+● The second largest period of group difference was during terminal swing (1600–2000 
+ms), aligning with established PD pathology of foot clearance and swing termination. 
+● There were no significant differences in attention between groups during the loading 
+response and mid stance periods (0–600 ms), suggesting the model appropriately 
+learned these sections of the gait cycle do not provide much information to 
+discriminate between PD and healthy controls. 
+● This clinically relevant attention was learned without phase labels or any other form 
+of domain supervision, offering compelling evidence that the model has learned 
+pathological gait features as opposed to noise. 
+● 72% (36/50) temporal positions had statistically significant group differences in 
+attention (p < 0.05), illustrating the generalisation of the model's discriminative 
+attention across a majority of the gait cycle as opposed to a small localized window. 
+● Particularly, there were no significant group differences observed during the loading 
+response and mid-stance (0–600 ms, p = 0.6955) and during the initial swing (1200–1600 
+ms, p = 0.2409). This is a clinically useful negative finding, these phases are 
+biomechanically less impaired in early PD, and the model was able to successfully 
+identify them and down-weight the importance of these phases without any phase labels 
+or domain supervision, further demonstrating that the attention pattern is an authentic 
+reflection of pathological gait knowledge, and not simply signal properties.  
+62 
+Figure 4.10: Layer-1 and Layer-2 CLS attention heatmaps (PD vs Control), Fused 
+Attention Profile with gait phase annotations, Statistical Significance Profile, Gait Phase 
+Bar Chart, SE channel attention difference  
+Transformer Attention Analysis Dashboard: Using attention weights taken from both 
+transformer layers over 2,416 test windows, this nine-panel figure illustrates the areas of the 
+2-second gait window that the Hybrid CNN-Transformer focused on. Without being 
+instructed to do so, the model autonomously learned to concentrate more on the terminal 
+63 
+stance and pre-swing phase (600–1200 ms), a clinically recognized difficulty region in PD 
+gait. 
+4.11 Hoehn & Yahr Stage-Stratified Analysis 
+Patients were categorized by Modified Hoehn & Yahr (H and Y) score using clinical 
+metadata from the PD participants. Following the mapping of all 68 PD subjects:  
+H and Y Score Distribution: 
+● After tier mapping (Stage 1 = scores 1–1.99, Stage 2 = scores 2–2.99): 
+○ H and Y Stage 1: 10 subjects 
+○  H and Y Stage 2: 58 subjects (includes 2.5 scores) 
+○ Every one of the 68 preprocessed PD subjects was correctly matched (0 
+unmatched).  
+● It should be noted that the AUC for All PD vs Controls in this stratified re-run (0.7761) is 
+different than the main experiment result (0.8544) due to exclusion of one control subject 
+during clinical metadata matching, resulting in 81 controls (n=82 in main experiment), 
+and the model was re-trained from scratch on this reduced control set. A different cross 
+validation split was generated under a slightly different subject distribution with the 
+re-training, leading to a different AUC estimate.  
+The Hybrid CNN-Transformer was re-run for three separate experiments. 
+64 
+Table 4.14: H and Y Stage-Stratified Analysis  
+Experim
+ent 
+All PD vs 
+Controls 
+PD 
+Subjects 
+68 
+Control 
+Subjects 
+81 
+AUC Accuracy Sensitivity Specificity F1-Score 
+0.7761  
+74.5%  
+67.6%  
+80.2%  
+H and Y 
+Stage 1 vs 
+Controls 
+H and Y 
+Stage 2 vs 
+Controls 
+10 
+58 
+Here, AUC change: 
+81 
+81 
+0.8519  
+0.7188  
+81.3%  
+69.8%  
+● All PD → H and Y Stage 1 only: +0.0757 
+● H and Y Stage 1 → H and Y Stage 2: −0.1330 
+Analysis: H and Y Stages and Model Performance: 
+90.0%  
+48.3%  
+80.2%  
+85.2%  
+0.7077  
+0.5143  
+0.5714  
+● Patients with H and Y stage 1 performed better than patients with H and Y stage 2 as 
+measured by area under the curve (AUC). Patients with H and Y stage 1 had an AUC 
+of 0.8519 when analysed with the model, compared to 0.7761 when analysed as all 
+PD patients and 0.7188 when analysed as H and Y stage 2 patients; this suggests that 
+the model can most accurately classify early-stage gait deviations. 
+● The AUC for the H and Y stage 2 patient population is significantly reduced to 0.7188 
+which corresponds to lower sensitivity (48.3%) but higher specificity (85.2%). At 
+stage 2, the PD has spread to bilateral involvement, in which both ankles are affected in a 
+mild and symmetric manner which significantly reduced the left-right asymmetry signal 
+that was found to be the most discriminative feature by the ablation study and SHAP 
+65 
+analysis. The model is less sensitive to the feature dimension when both sides are equally 
+impaired as in Stage 2, because both sides look more like healthy controls. The ceiling on 
+the level of sensitivity (85.2%) indicates that the model is able to provide correct 
+classification of healthy controls but is not a fault of the model architecture because both 
+limbs are equally affected.  
+● The difference in AUC between all PD patients and H and Y stage 1 patients is also 
+smaller than the difference in AUC between H and Y stage 1 and 2 patients (+0.0758 
+vs −0.1331), supporting the idea that disease stage contributes to the model's ability to 
+discriminate between different stages. 
+● Patients with H and Y stage 1 displayed unilateral symptoms, which allows for 
+predictable and consistent patterns of inter-limb asymmetries (for example, left vs 
+right ankle), thereby providing a clear signal for the model to use when classifying 
+patients as being part of H and Y stage 1. 
+Statistical Limitations and Restrictions 
+● Because there were only 10 PD subjects in the Stage 1 study population, the AUC 
+estimate is inherently unstable; thus, the 95% bootstrap confidence interval ([0.740, 
+0.947]) should be interpreted cautiously due to the large range within the interval. 
+● The F1 score of 0.5143 in Stage 1 reflects the extreme class imbalance (10 cases of 
+PD vs. 81 controls) rather than poor model performance. The F1 is a mathematical 
+product of the unbalanced distribution of use of cases of PD; due to the imbalanced 
+distribution, the high sensitivity (90.0%) and high specificity (80.2%) found with this 
+model demonstrate the model's utility for detecting early PD, but have resulted in a 
+low F1 score. 
+● In Stage 1, 90% sensitivity has significant clinical implications since it suggests that 9 
+of every 10 early-stage PD patients will be identified by the wearable ankle sensor 
+system and that there is significant emerging evidence to support the clinical utility of 
+using this sensor system for detecting early-stage PD. 
+Clinical Implication 
+● The consistent and detectable interlimb gait asymmetries observed in patients with 
+Stage 1 PD would suggest that wearable ankle sensors will provide support for an 
+earlier clinical diagnosis of PD before the emergence of bilateral symptoms. 
+66 
+● Because the deviations in gait patterns in patients with Stage 1 are structured, it may 
+be possible to create a symptom-specific, individualised treatment plan and 
+rehabilitation goals from the wearable ankle sensor data. 
+● These data highlight the value of evaluating PD by stage: combining all stages of PD 
+together (AUC 0.7761) obscures the significantly superior performance of the model 
+when evaluating early-stage patients, while testing for similarly low sensitivity and 
+specificity in later-stage PD patients.  
+Figure 4.11: H and Y Stage-Stratified PD Detection; Hybrid CNN-Transformer: ROC 
+Curves for All PD vs Controls, H and Y Stage 1 vs Controls, and H and Y Stage 2 vs 
+Controls, with Diagnosis Probability 
+H and Y Stage-Stratified Analysis(ROC Curves and Probability Distributions): This image 
+displays combined ROC curves and probability density graphs after running the Hybrid 
+CNN-Transformer independently for H and Y Stage 1 vs. controls, Stage 2 vs. controls, and 
+all PD vs. controls. With 90% sensitivity, stage 1 patients had the greatest AUC (0.852), 
+demonstrating that the model is best at identifying the earliest and most subtle cases of 
+Parkinson's disease. 
+67 
+4.12 Comparison with Related Works 
+Because the referred works were assessed utilizing various datasets, sensor setups, 
+preprocessing techniques, subject demographics, and validation methodologies, cross-study 
+numerical comparisons should be regarded with caution. Additionally, a number of earlier 
+research employed segment-level evaluation techniques or mixed-stage Parkinson's groups, 
+which may result in higher apparent performance because of simpler categorization settings 
+or possible subject-level data leakage. The suggested approach, on the other hand, 
+implements stringent Group 5-Fold subject-level cross-validation to guarantee realistic 
+generalization performance and concentrates exclusively on early-stage Parkinson's disease 
+(H and Y ≤ 2). Therefore, rather than asserting absolute metric superiority, the comparison is 
+meant to place the suggested framework within the larger PD gait-analysis literature.  
+The best-performing models from this study are directly compared to three closely 
+comparable studies found in the literature review: Nanayakkara et al. [2], Mostafavi et al. [3], 
+and Naimi et al. [4] in order to benchmark the experimental results. Three systematic 
+comparisons are provided:  
+(i) metrics for classification performance across all models and related works (Table 4.15);  
+(ii) evaluation technique and important design decisions (Table 4.16); and  
+(iii) improvement over the raw SVM baseline across suggested models (Table 4.17). 
+A crucial warning applies to all cross-study comparisons: variations in dataset, sensor 
+modality, subject group, PD severity stage, and evaluation technique prevent direct numerical 
+comparison. The analysis that follows specifically addresses these distinctions. According to 
+Tables 4.5–4.11, subject-level Youden's J threshold results are used in all proposed-work 
+figures. 
+68 
+Table 4.15: Cross-Study Classification Performance Comparison (Subject-Level, 
+Youden's J Threshold) 
+Study Dataset Sensor 
+Type 
+Subject
+s 
+(PD+H
+C)  
+Best Model / 
+Approach  
+AUC  Accu
+racy  
+Sensiti
+vity  
+Specif
+icity  
+F1-S
+core  
+Nanayakkar
+a et al. [2] 
+(2025)  
+WearGa
+it-PD  
+Pressure 
+insoles 
+(CoP)  
+39 PD 
++ 38 
+HC  
+Logistic 
+Regression (23 
+features)  
+0.921  87.5
+%  
+75.0%  N/R  0.857  
+Mostafavi et 
+al. [3] 
+(2025)  
+Not 
+specifie
+d  
+Pressure 
+insoles  
+Not 
+specifie
+d  
+DCNN + 
+Gramian 
+Angular Fields  
+N/R  98.6
+%  
+99.2%  98.5%  N/R  
+Naimi et al. 
+[4] (2023)  
+Physion
+et Gait  
+VGRF 
+foot 
+sensors  
+93 PD 
++ 73 
+HC  
+93 PD + 73 
+HC  
+N/R  87.89
+%  
+N/R  N/R  0.87  
+Our work: 
+M1 SVM 
+(Raw IMU)  
+WearGa
+it-PD  
+Bilateral 
+ankle 
+IMU  
+68 PD 
++ 82 
+HC  
+SVM-RBF, 
+110 raw 
+features  
+0.648
+5  
+60.4
+%  
+85.29
+%  
+39.51
+%  
+0.662
+9  
+Our work: 
+M2 SVM + 
+EGI  
+WearGa
+it-PD  
+Bilateral 
+ankle 
+IMU  
+68 PD 
++ 82 
+HC  
+SVM-RBF, 60 
+EGI features  
+0.760
+3  
+69.1
+%  
+77.94
+%  
+61.73
+%  
+0.697
+4  
+Our work: 
+M3 
+1D-CNN  
+WearGa
+it-PD  
+Bilateral 
+ankle 
+IMU  
+68 PD 
++ 82 
+HC  
+1D-CNN + SE 
+blocks + 
+Residuals  
+0.822
+8  
+76.51
+%  
+83.82
+%  
+70.37
+%  
+0.765
+1  
+Our work: 
+M4 Hybrid 
+CNN-Trans
+former   
+WearG
+ait-PD  
+Bilateral 
+ankle 
+IMU  
+68 PD 
++ 82 
+HC  
+Hybrid 
+CNN-Transfo
+rmer (Pre-LN 
++ CLS)  
+0.854
+4  
+79.87
+%  
+80.88
+%  
+79.01
+%  
+0.785
+7  
+Our work: 
+M5 
+ResNet-18 
++ RP  
+WearGa
+it-PD  
+Bilateral 
+ankle 
+IMU 
+68 PD 
++ 82 
+HC 
+ResNet-18 on 
+Recurrence 
+Plots  
+0.802
+5  
+76.51
+%  
+76.47
+%  
+76.54
+%  
+0.748
+2  
+Much earlier research used pressure insole data, mixed-stage PD populations, or evaluation 
+techniques vulnerable to data leakage, despite the fact that some showed superior numerical 
+accuracy. Our presented framework uses solely bilateral ankle IMU signals, implements 
+stringent subject-level Group 5-Fold cross-validation, and focuses on clinically difficult 
+early-stage PD identification (H and Y 1-2). As a result, the performance that was achieved 
+reflects a more practical and clinically valid assessment situation.  
+ 
+ 
+69 
+Analysis: (Table 4.15) 
+● The most impressive AUC (0.921) was reported by Nanayakkara et al. [2] who used 
+logistic regression on a small sample of CoP features from pressure insoles on a 
+significantly smaller sample (39 PD + 38 HC), a different sensor type, and a single 
+80/20 split. The proposed Hybrid CNN-Transformer achieved an AUC of 0.8544, a 
+more conservative, replicable and clinically generalizable estimate under strict, Group 
+5-fold subject level cross-validation (68 PD + 82 HC). 
+● The accuracy of 98.6% and the sensitivity of 99.2% reported by Mostafavi et al. [3] 
+are considered as suspicious, since no cross validation details or dataset composition 
+was provided, and results of this scale are rare for a real world binary gait 
+classification task. They can be due to training-set evaluation or data leakage. The 
+result in the proposed work is a subject level cross-validated estimate with no data 
+leakage, by design. 
+● The results by Naimi et al. [4] with a 1D ConvNet-Transformer model on the 
+Physionet dataset achieved an accuracy of 87.89% with a 10-fold cross validation 
+using segment-level CV. This is not directly comparable to the proposed work for 
+three reasons: (a) it uses a different dataset (Physionet) and sensor type (VGRF); (b) 
+segment-level CV elevates the performance compared to subject-level CV, because 
+the same subject may be present in both train and test folds; and (c) the proposed 
+work is binary early-stage detection (H and Y 1–2) rather than multi-class H and Y 
+staging (H and Y 2–3, moderate-to-severe). The suggested Hybrid CNN-Transformer 
+results (AUC 0.8544, Accuracy 79.87%) are satisfactory and sound, especially 
+considering the tougher evaluation process and cohort. 
+● The progression from M1 (SVM Raw, AUC 0.6485) to M2 (SVM+EGI, AUC 
+0.7603), to M3 (1D-CNN, AUC 0.8228) and finally to M4 (Hybrid 
+CNN-Transformer, AUC 0.8544) is clear and consistent in the proposed work. Most 
+important, M4 has the least difference in sensitivity and specificity (80.88% versus 
+79.01%) of the four models, reflecting its clinical balance as a screening tool. The 
+overall AUC of M5 (ResNet-18 + RP) is very low (0.8025), and it has mathematically 
+balanced the result (76.47% sensitivity vs. 76.54% specificity, with a difference of 
+0.07 percentage points) compared to M4.  
+70 
+Table 4.16: Methodology and Design Comparison Across Studies 
+Study  
+PD Stage 
+Focus  
+Evaluation 
+Method  
+Subject-Lev
+el CV  
+Data 
+Leakage 
+Risk  
+Explainabili
+ty (XAI)  
+H and Y 
+Stratified 
+Analysis  
+Nanayakkara 
+et al. [2]  
+Mostafavi et 
+al. [3]  
+Naimi et al. 
+[4]  
+Our Work  
+All stages 
+mixed  
+All stages 
+mixed  
+H and Y 2–3 
+(moderate–s
+evere)  
+H and Y 
+1–2 only 
+(early stage)  
+Analysis: (Table 4.16) 
+Single 80/20 
+split  
+Not 
+specified  
+10-fold CV 
+(segment 
+level)  
+Group 
+5-fold CV 
+(subject 
+level)  
+Partial  
+Not 
+specified  
+No 
+Yes  
+Low  
+Unknown  
+Yes 
+None 
+None  
+None  
+10-fold CV 
+(segment 
+level)  
+SHAP + 
+Attention 
+Maps (dual 
+XAI)  
+No  
+No  
+No  
+Yes; Stage 1 
+& Stage 2  
+● Our work is the first study reviewed to meet all four of the above methodological 
+requirements: (i) subject-level Group 5-fold cross validation with no data leakage; (ii) 
+exclusive focus on the early-stage PD (H and Y 1–2) group which is the most 
+clinically impactful but least studied; (iii) H and Y stage-stratified sub-analysis 
+separating Stage 1 from Stage 2 performance; and (iv) Dual validation of explainable 
+AI using SHAP analysis and Transformer attention maps. 
+● The evaluation gap is significant. Naimi et al. [4] employed the segment level 10-fold 
+CV, where gait windows of the same subject could be included in the training as well 
+in the test fold (data leakage is well known to boost reported metrics). Mostafavi et al. 
+[3] did not propose any evaluation method. Nanayakkara et al. [2] applied a single 
+80/20 split, which is a non-leakage split, but does not yield a cross-validated 
+generalization estimate. The most strict CV protocol among all reviewed studies is the 
+Group 5-fold subject-level CV with the CV threshold optimized with Youden's 
+method per fold. 
+● In terms of explainability, none of the reviewed classification studies used SHAP or 
+attention-based XAI to validate decisions made by the models clinically. The 
+proposed dual XAI pipeline yielded two independent lines of evidence: Firstly, SHAP 
+showed that all five EGI components contribute to the classification (variability 
+61.8%, turning 14.1%, tremor 13.4%, asymmetry 8.3%, timing 2.4%), and secondly, 
+the Transformer attention analysis confirmed that the model found independent 
+71 
+evidence of terminal stance and pre-swing gait phases (600–1200 ms, p = 0.0002), 
+which are clinically established pathological gait phases in PD without any domain 
+supervision and without using phase labels.  
+Table 4.17: Improvement of Our Models Over Raw SVM Baseline (M1) 
+Model 
+M2: SVM + EGI 
+ΔAUC 
++0.1118  
+ΔAccuracy 
++8.72% 
+ΔSensitivity 
+−7.35%  
+ΔSpecificity 
++22.22%  
+M3: 1D-CNN 
+M4: Hybrid 
+CNN-Transform
+er   
+M5: ResNet-18 + 
+RP 
+Analysis: (Table 4.17) 
++0.1743  
++0.2059  
++0.1540  
++16.11%  
++19.46%  
++16.11%  
+−1.47%  
+−4.41%  
+−8.82%  
++22.22%  
++39.51%  
++37.04%   
+● Here are gains over the raw SVM baseline (M1). The greatest overall improvement is 
+with M4 (Hybrid CNN-Transformer) with the greatest increases in both AUC 
+(+0.2059) and accuracy (+19.46%), and a single improvement in specificity (+39.51 
+percentage points); the greatest clinically impactful improvement of all models. This 
+is reflected in the false positive rate (FPR: healthy subjects misclassified as PD), 
+which decreased from 60.49% in the raw SVM to 20.99% in the Hybrid 
+CNN-Transformer, directly impacting the clinical viability. 
+● This decrease in sensitivity between M2-M5 compared to M1 is what we expect and 
+clinically acceptable. M1's high sensitivity (85.29%) was obtained due to an effective 
+prediction of PD for most of the subjects (threshold = 0.2167) with a clinically 
+meaningless 39.51% specificity. M4, on the other hand, has an 80.88% sensitivity and 
+79.01% specificity; a true balance to the diagnostic accuracy as both false positive and 
+false negative are kept in check at the same time. 
+72 
+● To sum up, the Hybrid CNN-Transformer (M4) model is the top performer on all 
+criteria: AUC, accuracy, specificity, F1-score, balance between sensitivity and 
+specificity and methodological quality. It does not achieve the highest raw accuracy 
+number from the larger literature but it gives the most reliable, clinically meaningful 
+and early-stage specific accuracy from all reviewed literature, and is a best performer 
+for real world use as a wearable tool for screening early Parkinson's Disease. 
+73 
+Chapter 5 Impacts of the Project 
+5.1 Impact of this project on societal, health, safety, legal and cultural 
+issues  
+Patients with Parkinson's Disease suffer greatly due to this disorder. However, this burden 
+extends beyond just the patient and includes caregivers and healthcare systems as well. With 
+an early diagnosis of Parkinson’s Disease before significant motor limitations, the patient is 
+able to receive earlier treatments through different methods such as pharmacologic (levodopa 
+therapy), physiotherapy, and lifestyle modifications. All of these treatments have 
+demonstrated positive effects on the disease; including the slowing of disease progression and 
+improving the quality of life of the patient. The Pipeline for the early detection of PD will 
+provide a method for screening due to its objective, low-cost and non-invasive nature and can 
+be used by primary care providers. This is particularly important for Low/Middle-Income 
+Countries that do not have access to specialists in neurology. 
+From a safety viewpoint, if PD-related gait abnormalities are detected early enough this will 
+allow for early intervention to improve balance and ultimately decrease the risk of falling as a 
+result of balance issues. From a cultural perspective, by framing detection as a traditional 
+screening device it will help reduce the social stigma associated with a PD diagnosis. Finally, 
+the legal considerations for protecting patient data must also be met. To accomplish this the 
+IMU sensor data will have to be securely stored and de-identified prior to any real-world use. 
+5.2 Impact of this project on environment and sustainability 
+Our project uses low-power wearable IMU sensors that consume very little electricity and do 
+not need chemical reagents or lab supplies. Unlike DaTscan imaging, which uses radioactive 
+tracers and specialized equipment, the IMU-based pipeline has a very small impact on the 
+environment. Training the model with cloud-based GPU computing (Kaggle) does have a 
+carbon cost, but this is only a one-time expense for training. Inference can be done on locally 
+collected sensor data on edge devices that use very little power, making the system 
+sustainable on a larger scale. 
+74 
+Chapter 6 Project Planning and Budget 
+6.1  Project Planning 
+Table 6.1: Timeline 
+6.2  Project Budget 
+Item  
+WearGait-PD Dataset  
+(Kaggle, public)  
+Estimated Cost (BDT)  
+0 
+Notes  
+Free, open-access 
+Kaggle GPU Compute (P100)  
+Python libraries (open-source)  
+0  
+0  
+Table 6.2:  Project Budget 
+Free tier used  
+NumPy, PyTorch, SHAP, etc.  
+75 
+Chapter 7 Complex Engineering Problems and Activities 
+7.1 Complex Engineering Problems (CEP) 
+ 
+TABLE I: COMPLEX ENGINEERING PROBLEM ATTRIBUTES TABLE 
+Attributes Addressing the complex engineering problems (P) in the project 
+P1 
+Depth of 
+knowledge 
+required 
+(K3-K8) 
+The project requires knowledge of K3: Python programming and data 
+structures; K4: Machine learning, deep learning, signal processing, and 
+biomedical computing including gait analysis and clinical PD 
+assessment; K5: model design and training including 1d-cnn with SE 
+blocks and residual connections, hybrid CNN-Transformer with Pre-LN 
+and CLS token, SVM with RBF kernel, and EGI feature engineering 
+across 5 clinical gait dimensions; K6: Engineering tools such as PyTorch, 
+scikit-learn, NumPy, SciPy, SHAP explainability library, Matplotlib, and 
+Jupyter Notebook or VS Code; K7: Involvement of healthcare and early 
+disease detection using consumer-grade wearable IMU sensors which 
+impacts health accessibility, clinical screening costs, and quality of life 
+particularly in resource-limited settings; and K8: Peer-reviewed scientific 
+papers by Anderson et al. [1], Nanayakkara et al. [2], Mostafavi et al. [3], 
+Naimi et al. [4], Vaswani et al. [5], Hu et al. [6], and Lundberg and Lee 
+[7].  
+P2 
+Range of 
+conflicting 
+requirements 
+The project involves multiple conflicting requirements and these are: 
+maximising model performance (CNN-Transformer AUC 0.854) which 
+conflicts with clinical interpretability (EGI-SVM AUC 0.760 but fully 
+explainable via SHAP). Maximising training data through 75% 
+overlapping windows which conflicts with prevention of data leakage, 
+resolved through Group 5-Fold cross-validation. Optimising sensitivity 
+for PD detection conflicts with maintaining specificity to avoid false 
+alarms which is balanced using Youden's J threshold.  
+P3 
+Depth of 
+analysis 
+required 
+No single approach solves the problem. Depth of analysis was required to 
+design the EGI feature framework (5 components, 61 features) from 
+clinical literature, select appropriate deep learning architectures (1d-cnn 
+vs hybrid CNN-Transformer vs ResNet-18), choose subject-level 
+evaluation methodology over window-level, and apply dual 
+explainability methods which are SHAP for EGI-SVM and attention 
+maps for the transformer to independently validate results from both 
+tracks.  
+P4 Familiarity 
+of issues 
+The project involved both familiar and unfamiliar challenges. Standard 
+ML classification and neural network training were familiar from 
+coursework. However, clinical gait biomechanics, PD pathophysiology, 
+H and Y staging, wearable sensor data handling, and Transformer 
+architecture with CLS token adaptation for short gait sequences required 
+independent study beyond standard CS curriculum.  
+76 
+P5 
+Extent of 
+applicable 
+codes 
+No existing standard code or framework directly solves early-stage PD 
+detection from bilateral ankle IMU. The EGI framework, hybrid model 
+architecture, and dual XAI pipeline were designed from scratch. If they 
+are deployed clinically , the system would fall under FDA Software as a 
+Medical Device (SaMD) regulations and HIPAA data privacy standards.  
+P6 
+Extent of 
+stakeholder 
+involvement 
+Several stakeholders are involved including PD patients (H and Y stages 
+1–2) who benefit from earlier diagnosis, neurologists who can use the 
+system as a screening tool, healthcare systems seeking cost-effective 
+diagnostic solutions, the WearGait-PD dataset creators, and wearable 
+technology industry. In Bangladesh, rural communities with limited 
+neurologist access are the key target who might benefit from this.  
+P7 Interdepende
+nce 
+The project involves several interconnected subsystems which are: signal 
+preprocessing (bandpass filter) directly affects EGI feature quality; EGI 
+statistical analysis guided feature design; CNN-Transformer architecture 
+and training strategy were jointly designed; subject-level group 5-Fold 
+evaluation was interdependent with clinical validity requirements; and 
+the dual XAI pipeline required tight coupling between SHAP and the 
+trained SVM model on one side, and attention weight extraction hooks 
+registered into the Transformer architecture on the other.  
+ 
+7.2 Complex Engineering Activities (CEA) 
+ 
+TABLE II: COMPLEX ENGINEERING PROBLEM ACTIVITIES TABLE 
+Attributes Addressing the complex engineering activities (A) in the project 
+A1 
+  
+Range of 
+resources 
+The project includes human resources (three people and one 
+supervisor), computational resources (GPU for deep learning training), 
+software tools (PyTorch, Scikit-learn, NumPy, SciPy, SHAP, 
+Matplotlib, VS Code), open access data (WearGait-PD dataset, 149 
+subjects, 12,079 processed windows of shape 200×12 from bilateral 
+ankle IMU), and scientific literature (IEEE, PubMed, MDPI, Nature). 
+A2 
+  
+Level of 
+interactions 
+The system requires communication between several parties, including 
+the team members creating the deep learning models and EGI feature 
+structure, the project manager offering technical and clinical advice, 
+and the clinical literature directing the creation of EGI components. 
+Data preparation, EGI feature extraction, SVM and deep learning 
+classifiers, SHAP explainability, and Transformer attention analysis 
+are among the various internal modules that must work together 
+smoothly via a shared pipeline. Each individual receives a final 
+early-stage PD risk estimate from the system following these 
+encounters.  
+77 
+A3   
+Innovation 
+The project introduces three primary contributions: (1) the Early Gait 
+Instability Index (EGI), a 5-component clinically interpretable 
+composite gait index derived from bilateral ankle IMU signals; (2) a 
+Hybrid CNN-Transformer architecture with Pre-LN normalization, SE 
+blocks, and CLS-token classification adapted for short 2-second gait 
+windows, extending the ConvNet-Transformer concept of Naimi et al. 
+[4] through channel attention and subject-level evaluation; and (3) a 
+dual explainable AI framework combining SHAP analysis and 
+Transformer attention maps to provide complementary interpretation 
+of gait features and improve clinical interpretability relative to prior 
+studies.  
+A4 
+Consequences 
+to society 
+/ Environment 
+The pipeline enables early PD detection before obvious clinical 
+symptoms, allowing timely treatment and reducing diagnostic delay of 
+one to three years. Using consumer-grade wearable sensors makes the 
+system accessible in resource-limited settings like Bangladesh where 
+specialist neurologists are rare. Economic impact includes reduced 
+long-term care costs and preserved patient productivity. Environmental 
+impact is negligible as the solution is software based. UN SDG #3: 
+Good Health and Well-Being; UN SDG #10: Reduced Inequalities.  
+A5  
+Familiarity 
+Required familiarity with python, PyTorch, scikit-learn, NumPy, 
+SciPy, SHAP library, matplotlib, and Jupyter Notebook for 
+implementation. Required independent learning of clinical gait 
+analysis, PD biomechanics, Transformer attention mechanisms, SHAP 
+explainability theory, recurrence plot generation, and group 
+cross-validation for clinical data. Debugging real clinical datasets with 
+sensor timing mismatches and formatting inconsistencies reflected 
+authentic engineering challenges beyond standard coursework. UN 
+SDG #4: Quality Education.  
+78 
+Chapter 8 Conclusions 
+8.1 Summary 
+This study has established and tested the Early Gait Instability Index (EGI) framework for the 
+purpose of detecting early-stage Parkinson's Disease using bilateral ankle IMU sensor data. 
+The EGI framework takes raw IMU data and translates it into five clinically validated 
+composite dimensions (variability, asymmetry, tremor, timing and turning,) thus offering an 
+understandable and organized alternative to the currently used method of extracting statistical 
+features from unstructured data sources. Training an SVM on the EGI-based features resulted 
+in a significant increase in predictive ability compared to using only the raw IMU-derived 
+data as features; supporting that the use of the EGI framework provides a meaningful 
+contribution to clinical practice. SHAP explainability showed support of this by indicating 
+that all five of the EGI dimensions were relevant for classifying patients, as well as that no 
+one of these dimensions dominated classification results. 
+Three separate deep learning (DL) architectures were developed and assessed: (1) An 
+improved 1D convolutional neural network (CNN) based architecture (whose convolutional 
+building block includes a residual connection and squeeze-and-excitation (SE) attention 
+mechanism), (2) A hybrid-cnn/transformer architecture (which employs a pre-layer 
+normalization and augmentation transform) and (3) A convolutional neural network built on 
+the ResNet-18 architecture, which was trained using two-dimensional (2-dimensional) 
+Recurrence Plot representations of the gait windows. All three DL architectures were 
+evaluated using a subject-level group cross-validation scheme consisting of five folds per 
+group for a total of 25 different subjects to thoroughly estimate each model's performance 
+without risk of data leakage. The Hybrid CNN-Transformer outperformed the 1D-CNN, 
+ResNet-18 with Recurrence Plots, and both SVM baselines, achieving the highest values 
+across all important assessment metrics: AUC of 0.8544, accuracy of 79.87%, sensitivity of 
+80.88%, specificity of 79.01%, and F1-score of 0.7857.  
+8.2 Limitations 
+The first limitation is that while the WearGait-PD dataset is focused on the early stages of 
+PD, the total number of participants in this dataset is limited and therefore limits the 
+statistical power of cross-validated estimates and may affect their generalizability across 
+other populations. Third, the generation of 2D Recurrence Plots requires significant 
+79 
+computational resources, which could create challenges for real-time processing on edge 
+devices. Fourth, the current system does not include medication status (ON/OFF) for 
+levodopa use which has an impact on gait in patients with PD. Finally, the testing of the 
+pipeline has not been conducted in a prospective clinical trial setting. 
+8.3 Future Improvement 
+There are various pathways for future research. For instance, if researchers were to collect a 
+larger multi-centered dataset consisting of early-stage PD patients, our model would be more 
+broadly applicable and allow for subgroup analyses based on the H and Y stage and 
+medication state. Additionally, the ResNet-18 RP model could be compressed through the use 
+of quantization or knowledge distillation in order to deploy it on low-powered edge devices 
+(e.g., Raspberry Pi, mobile phone). Another example would be utilizing continual learning 
+techniques to personalize the model to individual patients over time and track the progression 
+of the disease. Moreover, additional sensor modalities e.g., wrist-based accelerometers or 
+pressure insoles, could offer even more discriminative ability to classify patients with PD. 
+Lastly, a multi-site clinical validation study between neurologists would need to be done 
+before any deployment into the real world. 
+80 
+References 
+[1] A. J. Anderson, D. Eguren, M. A. Gonzalez, N. Khan, S. Watkinson, M. Caiola, S. S. 
+Hirczy, C. P. Zabetian, K. Mills, E. Moukheiber, L. Moro-Velazquez, N. Dehak, C. Motley, B. 
+C. Muir, A. Butala, and K. Kontson, "WearGait-PD: An open-access wearables dataset for 
+gait in Parkinson's disease and age-matched controls," Sci. Data, vol. 13, no. 1, Art. no. 440, 
+2026, doi: 10.1038/s41597-026-06806-2. 
+[2] T. Nanayakkara, H. M. K. K. M. B. Herath, H. S. Malekroodi, N. Madusanka, M. Yi, and 
+B. Lee, "Multi-domain CoP feature analysis of functional mobility for Parkinson's disease 
+detection using wearable pressure insoles," Sensors, vol. 25, no. 18, Art. no. 5859, Sep. 2025, 
+doi: 10.3390/s25185859. 
+[3] S. M. Mostafavi, S. B. Soumma, D. Peterson, S. H. Mehta, and H. Ghasemzadeh, 
+"Detection and severity assessment of Parkinson's disease through analyzing wearable sensor 
+data using Gramian angular fields and deep convolutional neural networks," Sensors, vol. 25, 
+no. 11, Art. no. 3421, May 2025, doi: 10.3390/s25113421. 
+[4] S. Naimi, W. Bouachir, and G.-A. Bilodeau, "1D-convolutional transformer for Parkinson 
+disease diagnosis from gait," arXiv, Nov. 2023, doi: 10.48550/arXiv.2311.03177. 
+[5] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. Kaiser, and I. 
+Polosukhin, "Attention is all you need," in Proc. Adv. Neural Inf. Process. Syst. (NeurIPS), 
+vol. 30, Long Beach, CA, USA, Dec. 2017, pp. 5998–6008. 
+[6] J. Hu, L. Shen, and G. Sun, "Squeeze-and-excitation networks," in Proceedings of the 
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, Salt Lake City, UT, 
+USA, Jun. 2018, pp. 7132–7141, doi: 10.1109/CVPR.2018.00745.  
+[7] S. M. Lundberg and S.-I. Lee, "A unified approach to interpreting model predictions," in 
+Proc. Adv. Neural Inf. Process. Syst. (NeurIPS), vol. 30, Long Beach, CA, USA, Dec. 2017, 
+pp. 4765–4774. 
+81 
